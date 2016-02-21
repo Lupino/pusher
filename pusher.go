@@ -5,8 +5,8 @@ import (
 	"github.com/Lupino/go-periodic"
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
+	"github.com/mholt/binding"
 	"gopkg.in/redis.v3"
-	"io/ioutil"
 	"log"
 	"net/http"
 )
@@ -54,13 +54,14 @@ func getPushers(group string) ([]string, error) {
 	return redisClient.SMembers(PREFIX + group).Result()
 }
 
-func push(group, pusher, body string) error {
+func push(group, pusher, data, schedat string) error {
 	if !hasPusher(group, pusher) {
 		log.Printf("pusher[%s] not in group[%s]", group, pusher)
 		return nil
 	}
 	var opts = map[string]string{
-		"args": body,
+		"args":    data,
+		"schedat": schedat,
 	}
 	if err := periodicClient.SubmitJob(group, pusher, opts); err != nil {
 		return err
@@ -68,10 +69,11 @@ func push(group, pusher, body string) error {
 	return nil
 }
 
-func pushAll(group, body string) error {
+func pushAll(group, data, schedat string) error {
 	var pushers, _ = getPushers(group)
 	var opts = map[string]string{
-		"args": body,
+		"args":    data,
+		"schedat": schedat,
 	}
 	for _, pusher := range pushers {
 		periodicClient.SubmitJob(group, pusher, opts)
@@ -109,21 +111,43 @@ func handleRemovePusher(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+type pushForm struct {
+	Pusher  string
+	Data    string
+	SchedAt string
+}
+
+func (f *pushForm) FieldMap(_ *http.Request) binding.FieldMap {
+	return binding.FieldMap{
+		&f.Pusher: binding.Field{
+			Form:     "pusher",
+			Required: true,
+		},
+		&f.Data: binding.Field{
+			Form:     "data",
+			Required: true,
+		},
+		&f.SchedAt: binding.Field{
+			Form:     "schedat",
+			Required: true,
+		},
+	}
+}
+
 func handlePush(w http.ResponseWriter, req *http.Request) {
-	req.ParseForm()
-	pusher := req.Form.Get("pusher")
+	f := new(pushForm)
+	errs := binding.Bind(req, f)
+	if errs.Handle(w) {
+		return
+	}
+
 	vars := mux.Vars(req)
 	group := vars["group"]
 	var (
 		bodyBytes []byte
 		err       error
 	)
-	if bodyBytes, err = ioutil.ReadAll(req.Body); err != nil {
-		log.Printf("ioutil.ReadAll() failed (%s)", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	if err := push(group, pusher, string(bodyBytes)); err != nil {
+	if err := push(group, f.Pusher, f.Data, f.SchedAt); err != nil {
 		log.Printf("push() failed (%s)", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -133,20 +157,35 @@ func handlePush(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+type pushAllForm struct {
+	Data    string
+	SchedAt string
+}
+
+func (f *pushAllForm) FieldMap(_ *http.Request) binding.FieldMap {
+	return binding.FieldMap{
+		&f.Data: binding.Field{
+			Form:     "data",
+			Required: true,
+		},
+		&f.SchedAt: binding.Field{
+			Form:     "schedat",
+			Required: true,
+		},
+	}
+}
+
 func handlePushAll(w http.ResponseWriter, req *http.Request) {
-	vars := mux.Vars(req)
-	group := vars["group"]
-	var (
-		bodyBytes []byte
-		err       error
-	)
-	if bodyBytes, err = ioutil.ReadAll(req.Body); err != nil {
-		log.Printf("ioutil.ReadAll() failed (%s)", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	f := new(pushAllForm)
+	errs := binding.Bind(req, f)
+	if errs.Handle(w) {
 		return
 	}
-	if err := pushAll(group, string(bodyBytes)); err != nil {
-		log.Printf("push() failed (%s)", err)
+
+	vars := mux.Vars(req)
+	group := vars["group"]
+	if err := pushAll(group, f.Data, f.SchedAt); err != nil {
+		log.Printf("pushAll() failed (%s)", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
