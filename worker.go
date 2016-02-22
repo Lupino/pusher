@@ -8,7 +8,7 @@ import (
 
 var periodicWorker *periodic.Worker
 
-func extractName(name string) string {
+func extractPusher(name string) string {
 	parts := strings.SplitN(name, "_", 2)
 	return parts[0]
 }
