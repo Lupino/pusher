@@ -31,8 +31,8 @@ func getPushers(group string) ([]string, error) {
 	return redisClient.SMembers(PREFIX + group).Result()
 }
 
-func push(group, pusher, data, schedat string) error {
-	if !hasPusher(group, pusher) {
+func push(group, pusher, data, schedat string, force bool) error {
+	if !force && !hasPusher(group, pusher) {
 		log.Printf("pusher[%s] not in group[%s]", group, pusher)
 		return nil
 	}
@@ -92,6 +92,7 @@ type pushForm struct {
 	Pusher  string
 	Data    string
 	SchedAt string
+	Force   bool
 }
 
 func (f *pushForm) FieldMap(_ *http.Request) binding.FieldMap {
@@ -108,6 +109,10 @@ func (f *pushForm) FieldMap(_ *http.Request) binding.FieldMap {
 			Form:     "schedat",
 			Required: true,
 		},
+		&f.Force: binding.Field{
+			Form:     "force",
+			Required: true,
+		},
 	}
 }
 
@@ -120,7 +125,7 @@ func handlePush(w http.ResponseWriter, req *http.Request) {
 
 	vars := mux.Vars(req)
 	group := vars["group"]
-	if err := push(group, f.Pusher, f.Data, f.SchedAt); err != nil {
+	if err := push(group, f.Pusher, f.Data, f.SchedAt, f.Force); err != nil {
 		log.Printf("push() failed (%s)", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
