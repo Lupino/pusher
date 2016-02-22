@@ -13,7 +13,7 @@ var redisClient *redis.Client
 var periodicClient *periodic.Client
 
 // PREFIX the perfix key of pusher.
-var PREFIX = "pusher:"
+const PREFIX = "pusher:"
 
 func addPusher(group string, pusher ...string) error {
 	return redisClient.SAdd(PREFIX+group, pusher...).Err()
@@ -40,7 +40,7 @@ func push(group, pusher, data, schedat string) error {
 		"args":    data,
 		"schedat": schedat,
 	}
-	if err := periodicClient.SubmitJob(group, pusher, opts); err != nil {
+	if err := periodicClient.SubmitJob(PREFIX+group, pusher, opts); err != nil {
 		return err
 	}
 	return nil
@@ -53,7 +53,7 @@ func pushAll(group, data, schedat string) error {
 		"schedat": schedat,
 	}
 	for _, pusher := range pushers {
-		periodicClient.SubmitJob(group, pusher, opts)
+		periodicClient.SubmitJob(PREFIX+group, pusher, opts)
 	}
 	return nil
 }

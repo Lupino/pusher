@@ -23,7 +23,7 @@ func warperPlugin(plugin Plugin) func(periodic.Job) {
 // RunWorker defined new pusher worker
 func RunWorker(w *periodic.Worker, plugins ...Plugin) {
 	for _, plugin := range plugins {
-		w.AddFunc(plugin.GetGroupName(), warperPlugin(plugin))
+		w.AddFunc(PREFIX+plugin.GetGroupName(), warperPlugin(plugin))
 	}
 	w.Work()
 }
