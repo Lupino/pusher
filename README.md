@@ -8,7 +8,7 @@ Install
 Usage
 -----
 
-pusher server also see cmd/pusher/main.go
+pusher server also see [cmd/pusher](https://github.com/Lupino/pusher/tree/master/cmd/pusher)
 
 ```go
 package main
@@ -50,7 +50,7 @@ func main() {
 }
 ```
 
-pusher worker also see cmd/pusher_sample_worker
+pusher worker also see [cmd/pusher_sample_worker](https://github.com/Lupino/pusher/tree/master/cmd/pusher_sample_worker)
 
 ```go
 package main
