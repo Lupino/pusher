@@ -1,6 +1,9 @@
 package pusher
 
 import (
+	"crypto/hmac"
+	"crypto/md5"
+	"encoding/hex"
 	"github.com/Lupino/go-periodic"
 	"github.com/gorilla/mux"
 	"github.com/mholt/binding"
@@ -14,6 +17,14 @@ var periodicClient *periodic.Client
 
 // PREFIX the perfix key of pusher.
 const PREFIX = "pusher:"
+
+func generateName(pusher, data string) string {
+	mac := hmac.New(md5.New, []byte(pusher))
+	mac.Write([]byte(data))
+	sum := mac.Sum(nil)
+
+	return pusher + "_" + hex.EncodeToString(sum)
+}
 
 func addPusher(group string, pusher ...string) error {
 	return redisClient.SAdd(PREFIX+group, pusher...).Err()
@@ -40,7 +51,7 @@ func push(group, pusher, data, schedat string, force bool) error {
 		"args":    data,
 		"schedat": schedat,
 	}
-	if err := periodicClient.SubmitJob(PREFIX+group, pusher, opts); err != nil {
+	if err := periodicClient.SubmitJob(PREFIX+group, generateName(pusher, data), opts); err != nil {
 		return err
 	}
 	return nil
@@ -53,7 +64,7 @@ func pushAll(group, data, schedat string) error {
 		"schedat": schedat,
 	}
 	for _, pusher := range pushers {
-		periodicClient.SubmitJob(PREFIX+group, pusher, opts)
+		periodicClient.SubmitJob(PREFIX+group, generateName(pusher, data), opts)
 	}
 	return nil
 }
