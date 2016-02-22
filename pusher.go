@@ -1,9 +1,7 @@
-package main
+package pusher
 
 import (
-	"flag"
 	"github.com/Lupino/go-periodic"
-	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
 	"github.com/mholt/binding"
 	"gopkg.in/redis.v3"
@@ -11,32 +9,11 @@ import (
 	"net/http"
 )
 
-var periodicPort string
-var redisHost string
 var redisClient *redis.Client
 var periodicClient *periodic.Client
 
 // PREFIX the perfix key of pusher.
 var PREFIX = "pusher:"
-
-func init() {
-	flag.StringVar(&periodicPort, "periodic_port", "unix:///tmp/periodic.sock", "the periodic server port.")
-	flag.StringVar(&redisHost, "redis_host", "localhost:6379", "the redis server host.")
-	flag.Parse()
-
-	redisClient = redis.NewClient(&redis.Options{
-		Addr: redisHost,
-	})
-
-	if err := redisClient.Ping().Err(); err != nil {
-		log.Fatal(err)
-	}
-
-	periodicClient = periodic.NewClient()
-	if err := periodicClient.Connect(periodicPort); err != nil {
-		log.Fatal(err)
-	}
-}
 
 func addPusher(group string, pusher ...string) error {
 	return redisClient.SAdd(PREFIX+group, pusher...).Err()
@@ -143,10 +120,6 @@ func handlePush(w http.ResponseWriter, req *http.Request) {
 
 	vars := mux.Vars(req)
 	group := vars["group"]
-	var (
-		bodyBytes []byte
-		err       error
-	)
 	if err := push(group, f.Pusher, f.Data, f.SchedAt); err != nil {
 		log.Printf("push() failed (%s)", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -194,14 +167,15 @@ func handlePushAll(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func main() {
+// NewPusher return new pusher router
+func NewPusher(rc *redis.Client, pc *periodic.Client) *mux.Router {
+	redisClient = rc
+	periodicClient = pc
+
 	router := mux.NewRouter()
 	router.HandleFunc("/pusher/{group}/add", handleAddPusher).Methods("POST")
 	router.HandleFunc("/pusher/{group}/delete", handleRemovePusher).Methods("POST")
 	router.HandleFunc("/pusher/{group}/push", handlePush).Methods("POST")
 	router.HandleFunc("/pusher/{group}/pushall", handlePushAll).Methods("POST")
-
-	n := negroni.New(negroni.NewRecovery(), negroni.NewLogger())
-	n.UseHandler(router)
-	n.Run(":3000")
+	return router
 }
