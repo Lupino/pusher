@@ -25,12 +25,6 @@ import (
 var periodicPort string
 var redisHost string
 
-func init() {
-	flag.StringVar(&periodicPort, "periodic_port", "unix:///tmp/periodic.sock", "the periodic server port.")
-	flag.StringVar(&redisHost, "redis_host", "localhost:6379", "the redis server host.")
-	flag.Parse()
-}
-
 func main() {
 	rc := redis.NewClient(&redis.Options{
 		Addr: redisHost,
@@ -50,7 +44,7 @@ func main() {
 }
 ```
 
-pusher worker also see [cmd/pusher_sample_worker](https://github.com/Lupino/pusher/tree/master/cmd/pusher_sample_worker)
+pusher worker also see [cmd/sender](https://github.com/Lupino/pusher/tree/master/cmd/sender)
 
 ```go
 package main
@@ -59,42 +53,32 @@ import (
 	"flag"
 	"github.com/Lupino/go-periodic"
 	"github.com/Lupino/pusher"
+	"github.com/Lupino/pusher/senders"
+	"github.com/sendgrid/sendgrid-go"
 	"log"
 )
 
-var periodicPort string
-
-type samplePlugin struct{}
-
-func (p samplePlugin) GetGroupName() string {
-	return "sample_plugin"
-}
-
-func (p samplePlugin) Do(pusher, data string) (int, error) {
-
-	// schedlater 10s
-	if data == "1" {
-		return 10, nil
-	}
-
-	// fail the job
-	// return 0, fmt.Errorf("pusher[%s] do fail", pusher)
-
-	// done the job
-	return 0, nil
-}
-
-func init() {
-	flag.StringVar(&periodicPort, "periodic_port", "unix:///tmp/periodic.sock", "the periodic server port.")
-	flag.Parse()
-}
+var (
+	periodicPort string
+	sgUser       string
+	sgKey        string
+	dayuKey      string
+	dayuSecret   string
+	from         string
+	fromName     string
+	signName     string
+	template     string
+)
 
 func main() {
 	pw := periodic.NewWorker()
 	if err := pw.Connect(periodicPort); err != nil {
 		log.Fatal(err)
 	}
-	pusher.RunWorker(pw, samplePlugin{})
+	var sg = sendgrid.NewSendGridClient(sgUser, sgKey)
+	var mailSender = senders.NewMailSender(sg, from, fromName)
+	var smsSender = senders.NewSMSSender(dayuKey, dayuSecret, signName, template)
+	pusher.RunWorker(pw, mailSender, smsSender)
 }
 ```
 
