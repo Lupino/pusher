@@ -31,7 +31,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	pusher.SetBackend(rc, pc)
 	n := negroni.New(negroni.NewRecovery(), negroni.NewLogger())
-	n.UseHandler(pusher.NewPusher(rc, pc))
+	n.UseHandler(pusher.NewRouter())
 	n.Run(":3000")
 }

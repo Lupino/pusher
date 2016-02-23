@@ -1,16 +1,11 @@
 package pusher
 
 import (
-	"github.com/Lupino/go-periodic"
 	"github.com/gorilla/mux"
 	"github.com/mholt/binding"
-	"gopkg.in/redis.v3"
 	"log"
 	"net/http"
 )
-
-var redisClient *redis.Client
-var periodicClient *periodic.Client
 
 func addPusher(group string, pusher ...string) error {
 	return redisClient.SAdd(PREFIX+group, pusher...).Err()
@@ -169,11 +164,8 @@ func handlePushAll(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// NewPusher return new pusher router
-func NewPusher(rc *redis.Client, pc *periodic.Client) *mux.Router {
-	redisClient = rc
-	periodicClient = pc
-
+// NewRouter return new pusher router
+func NewRouter() *mux.Router {
 	router := mux.NewRouter()
 	router.HandleFunc("/pusher/{group}/add", handleAddPusher).Methods("POST")
 	router.HandleFunc("/pusher/{group}/delete", handleRemovePusher).Methods("POST")
