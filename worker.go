@@ -5,8 +5,6 @@ import (
 	"log"
 )
 
-var periodicWorker *periodic.Worker
-
 func warperSender(sender Sender) func(periodic.Job) {
 	return func(job periodic.Job) {
 		pusher := extractPusher(job.Name)
