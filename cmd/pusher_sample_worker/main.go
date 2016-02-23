@@ -9,13 +9,13 @@ import (
 
 var periodicPort string
 
-type samplePlugin struct{}
+type sampleSender struct{}
 
-func (p samplePlugin) GetGroupName() string {
-	return "sample_plugin"
+func (p sampleSender) GetName() string {
+	return "sample_sender"
 }
 
-func (p samplePlugin) Do(pusher, data string) (int, error) {
+func (p sampleSender) Send(pusher, data string) (int, error) {
 
 	// schedlater 10s
 	if data == "1" {
@@ -39,5 +39,5 @@ func main() {
 	if err := pw.Connect(periodicPort); err != nil {
 		log.Fatal(err)
 	}
-	pusher.RunWorker(pw, samplePlugin{})
+	pusher.RunWorker(pw, sampleSender{})
 }

@@ -18,7 +18,7 @@ func verifyData(expect, pusher, data string) bool {
 	return expect == got
 }
 
-func warperPlugin(plugin Plugin) func(periodic.Job) {
+func warperSender(sender Sender) func(periodic.Job) {
 	return func(job periodic.Job) {
 		pusher := extractPusher(job.Name)
 		if !verifyData(job.Name, pusher, job.Args) {
@@ -26,7 +26,7 @@ func warperPlugin(plugin Plugin) func(periodic.Job) {
 			job.Done() // ignore invalid job
 			return
 		}
-		later, err := plugin.Do(pusher, job.Args)
+		later, err := sender.Send(pusher, job.Args)
 
 		if err != nil {
 			job.Fail()
@@ -39,9 +39,9 @@ func warperPlugin(plugin Plugin) func(periodic.Job) {
 }
 
 // RunWorker defined new pusher worker
-func RunWorker(w *periodic.Worker, plugins ...Plugin) {
-	for _, plugin := range plugins {
-		w.AddFunc(PREFIX+plugin.GetGroupName(), warperPlugin(plugin))
+func RunWorker(w *periodic.Worker, senders ...Sender) {
+	for _, sender := range senders {
+		w.AddFunc(PREFIX+sender.GetName(), warperSender(sender))
 	}
 	w.Work()
 }
