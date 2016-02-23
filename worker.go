@@ -42,6 +42,7 @@ func warperSender(sender Sender) func(periodic.Job) {
 func RunWorker(w *periodic.Worker, senders ...Sender) {
 	for _, sender := range senders {
 		w.AddFunc(PREFIX+sender.GetName(), warperSender(sender))
+		log.Printf("Loaded sender (%s)", sender.GetName())
 	}
 	w.Work()
 }
