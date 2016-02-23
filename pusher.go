@@ -1,9 +1,6 @@
 package pusher
 
 import (
-	"crypto/hmac"
-	"crypto/md5"
-	"encoding/hex"
 	"github.com/Lupino/go-periodic"
 	"github.com/gorilla/mux"
 	"github.com/mholt/binding"
@@ -14,17 +11,6 @@ import (
 
 var redisClient *redis.Client
 var periodicClient *periodic.Client
-
-// PREFIX the perfix key of pusher.
-const PREFIX = "pusher:"
-
-func generateName(pusher, data string) string {
-	mac := hmac.New(md5.New, []byte(pusher))
-	mac.Write([]byte(data))
-	sum := mac.Sum(nil)
-
-	return pusher + "_" + hex.EncodeToString(sum)
-}
 
 func addPusher(group string, pusher ...string) error {
 	return redisClient.SAdd(PREFIX+group, pusher...).Err()
