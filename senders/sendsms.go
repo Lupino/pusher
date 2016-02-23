@@ -35,7 +35,7 @@ func NewSMSSender(key, secret, signName, template string) SMSSender {
 }
 
 type smsObject struct {
-	PhoneNumber string `json:"phone_number"`
+	PhoneNumber string `json:"phoneNumber"`
 	Params      string `json:"params"`
 }
 
