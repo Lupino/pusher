@@ -11,51 +11,31 @@ Usage
 pusher server also see [cmd/pusher](https://github.com/Lupino/pusher/tree/master/cmd/pusher)
 
 ```go
-package main
-
 import (
-	"flag"
 	"github.com/Lupino/go-periodic"
 	"github.com/Lupino/pusher"
-	"github.com/codegangsta/negroni"
+	"github.com/blevesearch/bleve"
 	"gopkg.in/redis.v3"
-	"log"
+	"github.com/codegangsta/negroni"
 )
 
-var periodicPort string
-var redisHost string
-
-func main() {
-	rc := redis.NewClient(&redis.Options{
-		Addr: redisHost,
-	})
-	if err := rc.Ping().Err(); err != nil {
-		log.Fatal(err)
-	}
-
-	pc := periodic.NewClient()
-	if err := pc.Connect(periodicPort); err != nil {
-		log.Fatal(err)
-	}
-
-	n := negroni.New(negroni.NewRecovery(), negroni.NewLogger())
-	n.UseHandler(pusher.NewPusher(rc, pc))
-	n.Run(":3000")
-}
+var rc *redis.Client
+var pc *periodic.Client
+var index bleve.Index
+pusher.SetBackend(rc, pc, index)
+n := negroni.New(negroni.NewRecovery(), negroni.NewLogger())
+n.UseHandler(pusher.NewRouter())
+n.Run(":3000")
 ```
 
 pusher worker also see [cmd/sender](https://github.com/Lupino/pusher/tree/master/cmd/sender)
 
 ```go
-package main
-
 import (
-	"flag"
 	"github.com/Lupino/go-periodic"
 	"github.com/Lupino/pusher"
 	"github.com/Lupino/pusher/senders"
 	"github.com/sendgrid/sendgrid-go"
-	"log"
 )
 
 var (
@@ -66,19 +46,13 @@ var (
 	dayuSecret   string
 	from         string
 	fromName     string
-	signName     string
-	template     string
 )
 
-func main() {
-	pw := periodic.NewWorker()
-	if err := pw.Connect(periodicPort); err != nil {
-		log.Fatal(err)
-	}
-	var sg = sendgrid.NewSendGridClient(sgUser, sgKey)
-	var mailSender = senders.NewMailSender(sg, from, fromName)
-	var smsSender = senders.NewSMSSender(dayuKey, dayuSecret, signName, template)
-	pusher.RunWorker(pw, mailSender, smsSender)
+pw := periodic.NewWorker()
+var sg = sendgrid.NewSendGridClient(sgUser, sgKey)
+var mailSender = senders.NewMailSender(sg, from, fromName)
+var smsSender = senders.NewSMSSender(dayuKey, dayuSecret)
+pusher.RunWorker(pw, mailSender, smsSender)
 }
 ```
 
