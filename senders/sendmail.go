@@ -36,29 +36,29 @@ func (s MailSender) Send(pusher, data string) (int, error) {
 		m    mail
 		err  error
 		name string
-		info pusherLib.Info
+		p    pusherLib.Pusher
 	)
 	if err = json.Unmarshal([]byte(data), &m); err != nil {
 		log.Printf("json.Unmarshal() failed (%s)", err)
 		return 0, nil
 	}
 
-	if info, err = pusherLib.GetInfo(pusher); err != nil {
-		log.Printf("pusher.GetInfo() failed (%s)", err)
+	if p, err = pusherLib.GetPusher(pusher); err != nil {
+		log.Printf("pusher.GetPusher() failed (%s)", err)
 		return 0, nil
 	}
 
-	if info.Email == "" {
+	if p.Email == "" {
 		return 0, nil
 	}
 
-	name = info.RealName
+	name = p.RealName
 	if name == "" {
-		name = info.NickName
+		name = p.NickName
 	}
 
 	message := sendgrid.NewMail()
-	message.AddTo(info.Email)
+	message.AddTo(p.Email)
 	message.AddToName(name)
 	message.SetSubject(m.Subject)
 	message.SetText(m.Text)

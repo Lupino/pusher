@@ -45,25 +45,25 @@ func (SMSSender) GetName() string {
 // Send message to pusher then return sendlater
 func (s SMSSender) Send(pusher, data string) (int, error) {
 	var (
-		sms  smsObject
-		err  error
-		info pusherLib.Info
+		sms smsObject
+		err error
+		p   pusherLib.Pusher
 	)
 	if err = json.Unmarshal([]byte(data), &sms); err != nil {
 		log.Printf("json.Unmarshal() failed (%s)", err)
 		return 0, nil
 	}
 
-	if info, err = pusherLib.GetInfo(pusher); err != nil {
-		log.Printf("pusher.GetInfo() failed (%s)", err)
+	if p, err = pusherLib.GetPusher(pusher); err != nil {
+		log.Printf("pusher.GetPusher() failed (%s)", err)
 		return 0, nil
 	}
 
-	if info.PhoneNumber == "" {
+	if p.PhoneNumber == "" {
 		return 0, nil
 	}
 
-	if err = s.SendSMS(info.PhoneNumber, sms.Params, sms.SignName, sms.Template); err != nil {
+	if err = s.SendSMS(p.PhoneNumber, sms.Params, sms.SignName, sms.Template); err != nil {
 		log.Printf("senders.SMSSender.SendSMS() failed (%s)", err)
 		return 0, nil
 	}
