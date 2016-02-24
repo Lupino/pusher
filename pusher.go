@@ -12,7 +12,7 @@ type Pusher struct {
 	Email       string   `json:"email"`
 	RealName    string   `json:"realname"`
 	NickName    string   `json:"nickname"`
-	PhoneNumber string   `json:'phoneNumber'`
+	PhoneNumber string   `json:"phoneNumber"`
 	Senders     []string `json:"senders"`
 	CreatedAt   int64    `json:"createdAt"`
 }
