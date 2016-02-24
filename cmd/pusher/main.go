@@ -13,10 +13,12 @@ import (
 var periodicPort string
 var redisHost string
 var root string
+var host string
 
 func init() {
 	flag.StringVar(&periodicPort, "periodic_port", "unix:///tmp/periodic.sock", "the periodic server port.")
 	flag.StringVar(&redisHost, "redis_host", "localhost:6379", "the redis server host.")
+	flag.StringVar(&host, "host", "localhost:6000", "the pusher server host.")
 	flag.StringVar(&root, "work_dir", ".", "The pusher work dir.")
 	flag.Parse()
 }
@@ -46,5 +48,5 @@ func main() {
 	pusher.SetBackend(rc, pc, index)
 	n := negroni.New(negroni.NewRecovery(), negroni.NewLogger())
 	n.UseHandler(pusher.NewRouter())
-	n.Run(":3000")
+	n.Run(host)
 }
