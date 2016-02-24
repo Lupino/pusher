@@ -32,9 +32,10 @@ func NewSMSSender(key, secret string) SMSSender {
 }
 
 type smsObject struct {
-	Params   string `json:"params"`
-	SignName string `json:"signName"`
-	Template string `json:"template"`
+	Params    string `json:"params"`
+	SignName  string `json:"signName"`
+	Template  string `json:"template"`
+	CreatedAt int64  `json:"createdAt"`
 }
 
 // GetName for the periodic funcName

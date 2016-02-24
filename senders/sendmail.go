@@ -22,7 +22,7 @@ func NewMailSender(sg *sendgrid.SGClient, from, fromName string) MailSender {
 type mail struct {
 	Subject   string `json:"subject"`
 	Text      string `json:"text"`
-	CreatedAt int64  `json:"created_at"`
+	CreatedAt int64  `json:"createdAt"`
 }
 
 // GetName for the periodic funcName
