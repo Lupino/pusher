@@ -36,6 +36,7 @@ import (
 	"github.com/Lupino/pusher"
 	"github.com/Lupino/pusher/senders"
 	"github.com/sendgrid/sendgrid-go"
+	"gopkg.in/redis.v3"
 )
 
 var (
@@ -48,6 +49,8 @@ var (
 	fromName     string
 )
 
+var rc *redis.Client
+pusher.SetBackend(rc, nil, nil)
 pw := periodic.NewWorker()
 var sg = sendgrid.NewSendGridClient(sgUser, sgKey)
 var mailSender = senders.NewMailSender(sg, from, fromName)
