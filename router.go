@@ -81,11 +81,18 @@ func searchPushers(sender string, size, from int) (uint64, []string, error) {
 
 	var pushers []string
 	for _, hit := range searchResult.Hits {
-		for _, s := range hit.Fields["senders"].([]interface{}) {
-			if ss, ok := s.(string); ok {
-				if ss == sender {
-					pushers = append(pushers, hit.ID)
+		if values, ok := hit.Fields["senders"].([]interface{}); ok {
+			for _, s := range values {
+				if ss, ok := s.(string); ok {
+					if ss == sender {
+						pushers = append(pushers, hit.ID)
+					}
 				}
+			}
+		} else {
+			value, ok := hit.Fields["senders"].(string)
+			if ok && value == sender {
+				pushers = append(pushers, hit.ID)
 			}
 		}
 	}
