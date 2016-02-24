@@ -20,23 +20,21 @@ var apiRoot = "http://gw.api.taobao.com/router/rest"
 type SMSSender struct {
 	appKey    string
 	appSecret string
-	signName  string
-	template  string
 }
 
 // NewSMSSender new alidayu sms sender
-func NewSMSSender(key, secret, signName, template string) SMSSender {
+func NewSMSSender(key, secret string) SMSSender {
 	return SMSSender{
 		appKey:    key,
 		appSecret: secret,
-		signName:  signName,
-		template:  template,
 	}
 }
 
 type smsObject struct {
 	PhoneNumber string `json:"phoneNumber"`
 	Params      string `json:"params"`
+	SignName    string `json:"signName"`
+	Template    string `json:"template"`
 }
 
 // GetName for the periodic funcName
@@ -54,7 +52,7 @@ func (s SMSSender) Send(pusher, data string) (int, error) {
 		log.Printf("json.Unmarshal() failed (%s)", err)
 		return 0, nil
 	}
-	if err = s.SendSMS(sms.PhoneNumber, sms.Params); err != nil {
+	if err = s.SendSMS(sms.PhoneNumber, sms.Params, sms.SignName, sms.Template); err != nil {
 		log.Printf("senders.SMSSender.SendSMS() failed (%s)", err)
 		return 0, nil
 	}
@@ -62,7 +60,7 @@ func (s SMSSender) Send(pusher, data string) (int, error) {
 }
 
 // SendSMS message
-func (s SMSSender) SendSMS(phoneNumber, smsParams string) error {
+func (s SMSSender) SendSMS(phoneNumber, smsParams, signName, template string) error {
 	params := make(map[string]string)
 	params["method"] = "alibaba.aliqin.fc.sms.num.send"
 	params["app_key"] = s.appKey
@@ -71,10 +69,10 @@ func (s SMSSender) SendSMS(phoneNumber, smsParams string) error {
 	params["v"] = "2.0"
 	params["sign_method"] = "hmac"
 	params["sms_type"] = "normal"
-	params["sms_free_sign_name"] = s.signName
+	params["sms_free_sign_name"] = signName
 	params["rec_num"] = phoneNumber
 	params["sms_param"] = smsParams
-	params["sms_template_code"] = s.template
+	params["sms_template_code"] = template
 	params["sign"] = hmacMd5(s.appSecret, params)
 
 	var form = url.Values{}
