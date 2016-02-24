@@ -9,6 +9,7 @@ import (
 
 // PREFIX the perfix key of pusher.
 const PREFIX = "pusher:"
+const secondIndex = "pusher:secondIndex"
 
 func generateName(pusher, data string) string {
 	mac := hmac.New(md5.New, []byte(pusher))
