@@ -175,11 +175,11 @@ func (f *pushForm) FieldMap(_ *http.Request) binding.FieldMap {
 		},
 		&f.SchedAt: binding.Field{
 			Form:     "schedat",
-			Required: true,
+			Required: false,
 		},
 		&f.Force: binding.Field{
 			Form:     "force",
-			Required: true,
+			Required: false,
 		},
 	}
 }
@@ -212,7 +212,7 @@ func (f *pushAllForm) FieldMap(_ *http.Request) binding.FieldMap {
 		},
 		&f.SchedAt: binding.Field{
 			Form:     "schedat",
-			Required: true,
+			Required: false,
 		},
 	}
 }
