@@ -2,6 +2,7 @@ package senders
 
 import (
 	"encoding/json"
+	pusherLib "github.com/Lupino/pusher"
 	"github.com/sendgrid/sendgrid-go"
 	"log"
 )
@@ -19,8 +20,6 @@ func NewMailSender(sg *sendgrid.SGClient, from, fromName string) MailSender {
 }
 
 type mail struct {
-	Email     string `json:"email"`
-	UserName  string `json:"username"`
 	Subject   string `json:"subject"`
 	Text      string `json:"text"`
 	CreatedAt int64  `json:"created_at"`
@@ -34,17 +33,33 @@ func (MailSender) GetName() string {
 // Send message to pusher then return sendlater
 func (s MailSender) Send(pusher, data string) (int, error) {
 	var (
-		m   mail
-		err error
+		m    mail
+		err  error
+		name string
+		info pusherLib.Info
 	)
 	if err = json.Unmarshal([]byte(data), &m); err != nil {
 		log.Printf("json.Unmarshal() failed (%s)", err)
 		return 0, nil
 	}
 
+	if info, err = pusherLib.GetInfo(pusher); err != nil {
+		log.Printf("pusher.GetInfo() failed (%s)", err)
+		return 0, nil
+	}
+
+	if info.Email == "" {
+		return 0, nil
+	}
+
+	name = info.RealName
+	if name == "" {
+		name = info.NickName
+	}
+
 	message := sendgrid.NewMail()
-	message.AddTo(m.Email)
-	message.AddToName(m.UserName)
+	message.AddTo(info.Email)
+	message.AddToName(name)
 	message.SetSubject(m.Subject)
 	message.SetText(m.Text)
 	message.SetFrom(s.from)

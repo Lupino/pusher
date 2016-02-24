@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	pusherLib "github.com/Lupino/pusher"
 	"log"
 	"net/http"
 	"net/url"
@@ -31,10 +32,9 @@ func NewSMSSender(key, secret string) SMSSender {
 }
 
 type smsObject struct {
-	PhoneNumber string `json:"phoneNumber"`
-	Params      string `json:"params"`
-	SignName    string `json:"signName"`
-	Template    string `json:"template"`
+	Params   string `json:"params"`
+	SignName string `json:"signName"`
+	Template string `json:"template"`
 }
 
 // GetName for the periodic funcName
@@ -45,14 +45,25 @@ func (SMSSender) GetName() string {
 // Send message to pusher then return sendlater
 func (s SMSSender) Send(pusher, data string) (int, error) {
 	var (
-		sms smsObject
-		err error
+		sms  smsObject
+		err  error
+		info pusherLib.Info
 	)
 	if err = json.Unmarshal([]byte(data), &sms); err != nil {
 		log.Printf("json.Unmarshal() failed (%s)", err)
 		return 0, nil
 	}
-	if err = s.SendSMS(sms.PhoneNumber, sms.Params, sms.SignName, sms.Template); err != nil {
+
+	if info, err = pusherLib.GetInfo(pusher); err != nil {
+		log.Printf("pusher.GetInfo() failed (%s)", err)
+		return 0, nil
+	}
+
+	if info.PhoneNumber == "" {
+		return 0, nil
+	}
+
+	if err = s.SendSMS(info.PhoneNumber, sms.Params, sms.SignName, sms.Template); err != nil {
 		log.Printf("senders.SMSSender.SendSMS() failed (%s)", err)
 		return 0, nil
 	}
