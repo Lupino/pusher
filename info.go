@@ -32,7 +32,7 @@ func (info Info) Bytes() (data []byte) {
 // HasSender on a pusher info
 func (info Info) HasSender(sender string) bool {
 	for _, s := range info.Senders {
-		if s == sender {
+		if sender == s {
 			return true
 		}
 	}
@@ -55,9 +55,10 @@ func (info *Info) DelSender(sender string) bool {
 		return false
 	}
 	for _, s := range info.Senders {
-		if s != sender {
-			newSenders = append(newSenders, sender)
+		if sender == s {
+			continue
 		}
+		newSenders = append(newSenders, s)
 	}
 	info.Senders = newSenders
 	return true
