@@ -131,15 +131,15 @@ func push(sender, pusher, data, schedat string, force bool) (string, error) {
 }
 
 func pushAll(sender, data, schedat string) (string, error) {
-	var pushers, _ = getAllPushersBySender(sender)
 	var opts = map[string]string{
 		"args":    data,
 		"schedat": schedat,
 	}
-	for _, pusher := range pushers {
-		periodicClient.SubmitJob(PREFIX+sender, generateName(pusher, data), opts)
+	var name = generateName(sender, data)
+	if err := periodicClient.SubmitJob(PREFIX+"pushall", name, opts); err != nil {
+		return "", err
 	}
-	return "", nil
+	return name, nil
 }
 
 func handleAddSender(w http.ResponseWriter, req *http.Request, sender string) {

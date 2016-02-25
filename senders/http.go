@@ -64,3 +64,21 @@ func GetPushersBySender(host, sender string, from, size int) (total int, pushers
 	}
 	return ret.Total, ret.Pushers, nil
 }
+
+// Push message to pusher server by api
+func Push(host, sender, pusher, data string) (err error) {
+	var rsp *http.Response
+	var form = url.Values{}
+	form.Set("pusher", pusher)
+	form.Set("data", data)
+	if rsp, err = http.PostForm(host+"/pusher/"+sender+"/push", form); err != nil {
+		log.Printf("http.PostForm() failed (%s)", err)
+		return
+	}
+	defer rsp.Body.Close()
+	if int(rsp.StatusCode/100) != 2 {
+		err = fmt.Errorf("push sender[%s] pusher[%s] failed", sender, pusher)
+		return
+	}
+	return nil
+}

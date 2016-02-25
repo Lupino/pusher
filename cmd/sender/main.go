@@ -42,5 +42,6 @@ func main() {
 	var sg = sendgrid.NewSendGridClient(sgUser, sgKey)
 	var mailSender = senders.NewMailSender(sg, from, fromName, pusherHost)
 	var smsSender = senders.NewSMSSender(dayuKey, dayuSecret, pusherHost)
+	var pushallAender = senders.NewPushAllSender(pusherHost)
 	pusher.RunWorker(pw, mailSender, smsSender)
 }
