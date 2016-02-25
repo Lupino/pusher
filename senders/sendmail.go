@@ -65,8 +65,8 @@ func (s MailSender) Send(pusher, data string) (int, error) {
 	message.SetFrom(s.from)
 	message.SetFromName(s.fromName)
 	err = s.sg.Send(message)
-	if err == nil {
-		return 0, nil
+	if err != nil {
+		log.Printf("sendgrid.SGClient.Send() failed (%s)", err)
 	}
-	return 10, nil
+	return 0, nil
 }
