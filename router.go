@@ -112,24 +112,25 @@ func getAllPushersBySender(sender string) ([]string, error) {
 	return pushers, err
 }
 
-func push(sender, pusher, data, schedat string, force bool) error {
+func push(sender, pusher, data, schedat string, force bool) (string, error) {
 	if !hasSender(pusher, sender) {
 		log.Printf("pusher[%s] not has sender[%s]", pusher, sender)
 		if !force {
-			return nil
+			return "", nil
 		}
 	}
 	var opts = map[string]string{
 		"args":    data,
 		"schedat": schedat,
 	}
-	if err := periodicClient.SubmitJob(PREFIX+sender, generateName(pusher, data), opts); err != nil {
-		return err
+	var name = generateName(pusher, data)
+	if err := periodicClient.SubmitJob(PREFIX+sender, name, opts); err != nil {
+		return "", err
 	}
-	return nil
+	return name, nil
 }
 
-func pushAll(sender, data, schedat string) error {
+func pushAll(sender, data, schedat string) (string, error) {
 	var pushers, _ = getAllPushersBySender(sender)
 	var opts = map[string]string{
 		"args":    data,
@@ -138,7 +139,7 @@ func pushAll(sender, data, schedat string) error {
 	for _, pusher := range pushers {
 		periodicClient.SubmitJob(PREFIX+sender, generateName(pusher, data), opts)
 	}
-	return nil
+	return "", nil
 }
 
 func handleAddSender(w http.ResponseWriter, req *http.Request, sender string) {
@@ -198,12 +199,17 @@ func handlePush(w http.ResponseWriter, req *http.Request, sender string) {
 		return
 	}
 
-	if err := push(sender, f.Pusher, f.Data, f.SchedAt, f.Force); err != nil {
+	var (
+		name string
+		err  error
+	)
+
+	if name, err = push(sender, f.Pusher, f.Data, f.SchedAt, f.Force); err != nil {
 		log.Printf("push() failed (%s)", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	sendJSONResponse(w, http.StatusOK, "result", "OK")
+	sendJSONResponse(w, http.StatusOK, "result", map[string]string{"name": name, "status": "OK"})
 }
 
 type pushAllForm struct {
@@ -231,13 +237,17 @@ func handlePushAll(w http.ResponseWriter, req *http.Request, sender string) {
 		return
 	}
 
-	if err := pushAll(sender, f.Data, f.SchedAt); err != nil {
+	var (
+		name string
+		err  error
+	)
+	if name, err = pushAll(sender, f.Data, f.SchedAt); err != nil {
 		log.Printf("pushAll() failed (%s)", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	sendJSONResponse(w, http.StatusOK, "result", "OK")
+	sendJSONResponse(w, http.StatusOK, "result", map[string]string{"name": name, "status": "OK"})
 }
 
 func wapperSenderHandle(handle func(http.ResponseWriter, *http.Request, string)) func(http.ResponseWriter, *http.Request) {
