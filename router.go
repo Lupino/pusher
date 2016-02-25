@@ -142,6 +142,20 @@ func pushAll(sender, data, schedat string) (string, error) {
 	return name, nil
 }
 
+/**
+ * @api {post} /pusher/:sender/add Add a sender to an exists pusher.
+ * @apiName addSender
+ * @apiGroup Sender
+ *
+ * @apiParam {String} sender Sender name.
+ * @apiParam {String} pusher Pusher unique ID.
+ * @apiExample Example usage:
+ * curl -i http://pusher_host/pusher/sendmail/add -d pusher=lupinno
+ *
+ *
+ * @apiSuccess {String} result OK.
+ *
+ */
 func handleAddSender(w http.ResponseWriter, req *http.Request, sender string) {
 	req.ParseForm()
 	pusher := req.Form.Get("pusher")
@@ -153,6 +167,20 @@ func handleAddSender(w http.ResponseWriter, req *http.Request, sender string) {
 	sendJSONResponse(w, http.StatusOK, "result", "OK")
 }
 
+/**
+ * @api {post} /pusher/:sender/delete delete sender from an exists pusher.
+ * @apiName RemoveSender
+ * @apiGroup Sender
+ *
+ * @apiParam {String} sender Sender name.
+ * @apiParam {String} pusher Pusher unique ID.
+ * @apiExample Example usage:
+ * curl -i http://pusher_host/pusher/sendmail/delete -d pusher=lupinno
+ *
+ *
+ * @apiSuccess {String} result OK.
+ *
+ */
 func handleRemoveSender(w http.ResponseWriter, req *http.Request, sender string) {
 	req.ParseForm()
 	pusher := req.Form.Get("pusher")
@@ -192,6 +220,26 @@ func (f *pushForm) FieldMap(_ *http.Request) binding.FieldMap {
 	}
 }
 
+/**
+ * @api {post} /pusher/:sender/push Push message to pusher which has a sender.
+ * @apiName push
+ * @apiGroup Push
+ *
+ * @apiParam {String} sender Sender name.
+ * @apiParam {String} pusher Pusher unique ID.
+ * @apiParam {String} data Sender data.
+ * @apiParam {Number} [schedat] when to sched the job.
+ * @apiParam {Boolean} [force=false] force push.
+ *
+ * @apiExample Example usage:
+ * curl -i http://pusher_host/pusher/sendmail/push \
+ *      -d pusher=lupino \
+ *      -d data='{"subject": "subject", "text": "text"}'
+ *
+ * @apiSuccess {String} result OK.
+ * @apiSuccess {String} name The periodic job name.
+ *
+ */
 func handlePush(w http.ResponseWriter, req *http.Request, sender string) {
 	f := new(pushForm)
 	errs := binding.Bind(req, f)
@@ -209,7 +257,7 @@ func handlePush(w http.ResponseWriter, req *http.Request, sender string) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	sendJSONResponse(w, http.StatusOK, "result", map[string]string{"name": name, "status": "OK"})
+	sendJSONResponse(w, http.StatusOK, "", map[string]string{"name": name, "result": "OK"})
 }
 
 type pushAllForm struct {
@@ -230,6 +278,23 @@ func (f *pushAllForm) FieldMap(_ *http.Request) binding.FieldMap {
 	}
 }
 
+/**
+ * @api {post} /pusher/:sender/pushall Push message to all pusher which has a sender.
+ * @apiName pushall
+ * @apiGroup Push
+ *
+ * @apiParam {String} sender Sender name.
+ * @apiParam {String} data Sender data.
+ * @apiParam {String} [schedat] when to sched the job.
+ *
+ * @apiExample Example usage:
+ * curl -i http://pusher_host/pusher/sendmail/pushall \
+ *      -d data='{"subject": "subject", "text": "text"}'
+ *
+ * @apiSuccess {String} result OK.
+ * @apiSuccess {String} name The periodic job name.
+ *
+ */
 func handlePushAll(w http.ResponseWriter, req *http.Request, sender string) {
 	f := new(pushAllForm)
 	errs := binding.Bind(req, f)
@@ -247,9 +312,25 @@ func handlePushAll(w http.ResponseWriter, req *http.Request, sender string) {
 		return
 	}
 
-	sendJSONResponse(w, http.StatusOK, "result", map[string]string{"name": name, "status": "OK"})
+	sendJSONResponse(w, http.StatusOK, "", map[string]string{"name": name, "result": "OK"})
 }
 
+/**
+ * @api {post} /pusher/:sender/cancelpush Cancel message push which not done.
+ * @apiName cancelpush
+ * @apiGroup Push
+ *
+ * @apiParam {String} sender Sender name or pushall.
+ * @apiParam {String} name The periodic job name.
+ *
+ * @apiExample Example usage:
+ * curl -i http://pusher_host/pusher/sendmail/cancelpush \
+ *      -d name=xxxxxx
+ *
+ * @apiSuccess {String} result OK.
+ * @apiSuccess {String} name The periodic job name.
+ *
+ */
 func handleCancelPush(w http.ResponseWriter, req *http.Request, sender string) {
 	req.ParseForm()
 	var (
@@ -261,7 +342,7 @@ func handleCancelPush(w http.ResponseWriter, req *http.Request, sender string) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	sendJSONResponse(w, http.StatusOK, "result", map[string]string{"status": "OK"})
+	sendJSONResponse(w, http.StatusOK, "result", "OK")
 }
 
 func wapperSenderHandle(handle func(http.ResponseWriter, *http.Request, string)) func(http.ResponseWriter, *http.Request) {
@@ -272,6 +353,25 @@ func wapperSenderHandle(handle func(http.ResponseWriter, *http.Request, string))
 	}
 }
 
+/**
+ * @api {get} /pusher/pushers/:pusher/ Get pusher information
+ * @apiName GetPusher
+ * @apiGroup Pusher
+ *
+ * @apiParam {String} pusher Pusher unique ID.
+ * @apiExample Example usage:
+ * curl -i http://pusher_host/pusher/pushers/4711/
+ *
+ * @apiSuccess {String} pusher Pusher object.
+ *
+ * @apiError {String} err pusher <code>pusher</code> not exists.
+ * @apiErrorExample Response (example):
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "err": "pusher 4711 not exists."
+ *     }
+ *
+ */
 func handleGetPusher(w http.ResponseWriter, req *http.Request, pusher string) {
 	p, err := GetPusher(pusher)
 	if err != nil {
@@ -284,6 +384,23 @@ func handleGetPusher(w http.ResponseWriter, req *http.Request, pusher string) {
 	sendJSONResponse(w, http.StatusOK, "pusher", p)
 }
 
+/**
+ * @api {get} /pusher/pushers/ Get pusher list
+ * @apiName GetPusherList
+ * @apiGroup Pusher
+ *
+ * @apiParam {Number} [from=0] describe how much and which part of the return pusher list
+ * @apiParam {Number} [size=10] describe how much and which part of the return pusher list
+ * @apiExample Example usage:
+ * curl -i http://pusher_host/pusher/pushers/?from=0&size=20
+ *
+ *
+ * @apiSuccess {String} pushers Pusher object list.
+ * @apiSuccess {Number} total total pushers.
+ * @apiSuccess {Number} from describe how much and which part of the return pusher list
+ * @apiSuccess {Number} size describe how much and which part of the return pusher list
+ *
+ */
 func handleGetAllPusher(w http.ResponseWriter, req *http.Request) {
 	var qs = req.URL.Query()
 	var err error
@@ -326,6 +443,25 @@ func handleGetAllPusher(w http.ResponseWriter, req *http.Request) {
 	})
 }
 
+/**
+ * @api {get} /pusher/search/ Search pushers
+ * @apiName SearchPusher
+ * @apiGroup Pusher
+ *
+ * @apiParam {String} q search keyword.
+ * @apiParam {Number} [from=0] describe how much and which part of the return pusher list
+ * @apiParam {Number} [size=10] describe how much and which part of the return pusher list
+ * @apiExample Example usage:
+ * curl -i http://pusher_host/pusher/search/?q=sendmail&from=0&size=20
+ *
+ *
+ * @apiSuccess {String} pushers Pusher object list.
+ * @apiSuccess {Number} total total pushers.
+ * @apiSuccess {Number} from describe how much and which part of the return pusher list
+ * @apiSuccess {Number} size describe how much and which part of the return pusher list
+ * @apiSuccess {String} q search keyword.
+ *
+ */
 func handleSearchPusher(w http.ResponseWriter, req *http.Request) {
 	var qs = req.URL.Query()
 	var err error
@@ -377,6 +513,31 @@ func handleSearchPusher(w http.ResponseWriter, req *http.Request) {
 	})
 }
 
+/**
+ * @api {post} /pusher/pushers/ Create a new pusher
+ * @apiName AddPusher
+ * @apiGroup Pusher
+ *
+ * @apiParam {String} pusher Pusher unique ID.
+ * @apiParam {String} [email] Pusher email address.
+ * @apiParam {String} [phoneNumber] Pusher phone number.
+ * @apiParam {String} [realname] Pusher real name.
+ * @apiParam {String} [nickname] Pusher nickname.
+ * @apiParam {Number} [createdAt] Pusher created time.
+ * @apiExample Example usage:
+ * curl -i http://pusher_host/pusher/pushers/ \
+ *      -d pusher=lupino \
+ *      -d email=lmjubuntu@gmail.com \
+ *      -d phoneNumber=12345678901 \
+ *      -d realname=xxx \
+ *      -d nickname=xxx \
+ *      -d createdAt=1456403493
+ *
+ *
+ * @apiSuccess {String} result OK.
+ *
+ * @apiError {String} err pusher is required.
+ */
 func handleAddPusher(w http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
 	var p = Pusher{}
@@ -387,7 +548,7 @@ func handleAddPusher(w http.ResponseWriter, req *http.Request) {
 	p.PhoneNumber = req.Form.Get("phoneNumber")
 	p.CreatedAt, _ = strconv.ParseInt(req.Form.Get("createdAt"), 10, 64)
 	if p.ID == "" {
-		sendJSONResponse(w, http.StatusOK, "err", "pusher is required.")
+		sendJSONResponse(w, http.StatusNotAcceptable, "err", "pusher is required.")
 		return
 	}
 
@@ -399,6 +560,18 @@ func handleAddPusher(w http.ResponseWriter, req *http.Request) {
 	sendJSONResponse(w, http.StatusOK, "result", "OK")
 }
 
+/**
+ * @api {DELETE} /pusher/pushers/:pusher/ Remove an exists pusher
+ * @apiName ReomvePusher
+ * @apiGroup Pusher
+ *
+ * @apiParam {String} pusher Pusher unique ID.
+ * @apiExample Example usage:
+ * curl -i -XDELETE http://pusher_host/pusher/pushers/4711/
+ *
+ * @apiSuccess {String} result OK.
+ *
+ */
 func handleRemovePusher(w http.ResponseWriter, req *http.Request, pusher string) {
 	if err := DelPusher(pusher); err != nil {
 		log.Printf("DelPusher() failed(%s)", err)
@@ -408,6 +581,32 @@ func handleRemovePusher(w http.ResponseWriter, req *http.Request, pusher string)
 	sendJSONResponse(w, http.StatusOK, "result", "OK")
 }
 
+/**
+ * @api {post} /pusher/pushers/:pusher/ Update an exists pusher
+ * @apiName UpdatePusher
+ * @apiGroup Pusher
+ *
+ * @apiParam {String} pusher Pusher unique ID.
+ *
+ * @apiParam {String} [email] Pusher email address.
+ * @apiParam {String} [phoneNumber] Pusher phone number.
+ * @apiParam {String} [realname] Pusher real name.
+ * @apiParam {String} [nickname] Pusher nickname.
+ * @apiParam {Number} [createdAt] Pusher created time.
+ * @apiExample Example usage:
+ * curl -i http://pusher_host/pusher/pushers/lupino/ \
+ *      -d email=lmjubuntu@gmail.com \
+ *      -d phoneNumber=12345678901 \
+ *      -d realname=xxx \
+ *      -d nickname=xxx \
+ *      -d createdAt=1456403493
+ *
+ *
+ * @apiSuccess {String} result OK.
+ *
+ * @apiError {String} err pusher <code> pusher </code> not exists.
+ *
+ */
 func handleUpdatePusher(w http.ResponseWriter, req *http.Request, pusher string) {
 	var p Pusher
 	var err error
@@ -443,6 +642,24 @@ func handleUpdatePusher(w http.ResponseWriter, req *http.Request, pusher string)
 	sendJSONResponse(w, http.StatusOK, "result", "OK")
 }
 
+/**
+ * @api {get} /pusher/:sender/pushers/ Get pusher list by sender
+ * @apiName GetPusherListBySender
+ * @apiGroup Pusher
+ *
+ * @apiParam {String} sender Sender of pusher.
+ * @apiParam {Number} [from=0] describe how much and which part of the return pusher list
+ * @apiParam {Number} [size=10] describe how much and which part of the return pusher list
+ * @apiExample Example usage:
+ * curl -i http://pusher_host/pusher/sendmail/pushers/?from=0&size=20
+ *
+ * @apiSuccess {String} pushers Pusher object list.
+ * @apiSuccess {Number} total total pushers.
+ * @apiSuccess {Number} from describe how much and which part of the return pusher list
+ * @apiSuccess {Number} size describe how much and which part of the return pusher list
+ * @apiSuccess {String} sender Sender of pusher
+ *
+ */
 func handleGetPushersBySender(w http.ResponseWriter, req *http.Request, sender string) {
 	var qs = req.URL.Query()
 	var err error
