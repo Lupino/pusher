@@ -11,18 +11,10 @@ Usage
 pusher server also see [cmd/pusher](https://github.com/Lupino/pusher/tree/master/cmd/pusher)
 
 ```go
-import (
-	"github.com/Lupino/go-periodic"
-	"github.com/Lupino/pusher"
-	"github.com/blevesearch/bleve"
-	"gopkg.in/redis.v3"
-	"github.com/codegangsta/negroni"
-)
+import "github.com/Lupino/pusher"
+import "github.com/codegangsta/negroni"
 
-var rc *redis.Client
-var pc *periodic.Client
-var index bleve.Index
-pusher.SetBackend(rc, pc, index)
+pusher.SetBackend(...)
 n := negroni.New(negroni.NewRecovery(), negroni.NewLogger())
 n.UseHandler(pusher.NewRouter())
 n.Run(":3000")
@@ -32,31 +24,14 @@ pusher worker also see [cmd/sender](https://github.com/Lupino/pusher/tree/master
 
 ```go
 import (
-	"github.com/Lupino/go-periodic"
 	"github.com/Lupino/pusher"
 	"github.com/Lupino/pusher/senders"
-	"github.com/sendgrid/sendgrid-go"
-	"gopkg.in/redis.v3"
 )
 
-var (
-	periodicPort string
-	sgUser       string
-	sgKey        string
-	dayuKey      string
-	dayuSecret   string
-	from         string
-	fromName     string
-)
-
-var rc *redis.Client
-pusher.SetBackend(rc, nil, nil)
-pw := periodic.NewWorker()
-var sg = sendgrid.NewSendGridClient(sgUser, sgKey)
-var mailSender = senders.NewMailSender(sg, from, fromName)
-var smsSender = senders.NewSMSSender(dayuKey, dayuSecret)
-pusher.RunWorker(pw, mailSender, smsSender)
-}
+var mailSender = senders.NewMailSender(...)
+var smsSender = senders.NewSMSSender(...)
+var pushAllSender = senders.NewPushAllSender(...)
+pusher.RunWorker(pw, mailSender, smsSender, pushAllSender)
 ```
 
 Requirements
