@@ -19,15 +19,17 @@ var apiRoot = "http://gw.api.taobao.com/router/rest"
 
 // SMSSender a alidayu sms sender
 type SMSSender struct {
-	appKey    string
-	appSecret string
+	appKey     string
+	appSecret  string
+	pusherHost string
 }
 
 // NewSMSSender new alidayu sms sender
-func NewSMSSender(key, secret string) SMSSender {
+func NewSMSSender(key, secret, pusherHost string) SMSSender {
 	return SMSSender{
-		appKey:    key,
-		appSecret: secret,
+		appKey:     key,
+		appSecret:  secret,
+		pusherHost: pusherHost,
 	}
 }
 
@@ -55,7 +57,7 @@ func (s SMSSender) Send(pusher, data string) (int, error) {
 		return 0, nil
 	}
 
-	if p, err = pusherLib.GetPusher(pusher); err != nil {
+	if p, err = GetPusher(s.pusherHost, pusher); err != nil {
 		log.Printf("pusher.GetPusher() failed (%s)", err)
 		return 0, nil
 	}
