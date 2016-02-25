@@ -12,7 +12,7 @@ import (
 // GetPusher from api
 func GetPusher(host, pusher string) (p pusherLib.Pusher, err error) {
 	var rsp *http.Response
-	if rsp, err = http.Get(host + "/pusher/pushers/" + pusher + "/"); err != nil {
+	if rsp, err = http.Get("http://" + host + "/pusher/pushers/" + pusher + "/"); err != nil {
 		log.Printf("http.Get() failed (%s)", err)
 		return
 	}
@@ -46,7 +46,7 @@ type getPushersBySenderResult struct {
 // GetPushersBySender from api
 func GetPushersBySender(host, sender string, from, size int) (total int, pushers []pusherLib.Pusher, err error) {
 	var rsp *http.Response
-	var url = fmt.Sprintf("%s/pusher/%s/pushers/?from=%d&size=%d", host, sender, from, size)
+	var url = fmt.Sprintf("http://%s/pusher/%s/pushers/?from=%d&size=%d", host, sender, from, size)
 	if rsp, err = http.Get(url); err != nil {
 		log.Printf("http.Get() failed (%s)", err)
 		return
@@ -71,7 +71,7 @@ func Push(host, sender, pusher, data string) (err error) {
 	var form = url.Values{}
 	form.Set("pusher", pusher)
 	form.Set("data", data)
-	if rsp, err = http.PostForm(host+"/pusher/"+sender+"/push", form); err != nil {
+	if rsp, err = http.PostForm("http://"+host+"/pusher/"+sender+"/push", form); err != nil {
 		log.Printf("http.PostForm() failed (%s)", err)
 		return
 	}
