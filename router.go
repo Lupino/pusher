@@ -10,6 +10,27 @@ import (
 	"strconv"
 )
 
+/**
+ * @apiDefine SenderParam
+ * @apiParam {String} sender Sender name.
+ * @apiParam {String} pusher Pusher unique ID.
+ */
+
+/**
+ * @apiDefine DataParam
+ * @apiParam {String} data Sender data.
+ * @apiParam {Number} [schedat] when to sched the job.
+ */
+/**
+ * @apiDefine PusherParam
+ * @apiParam {String} pusher Pusher unique ID.
+ * @apiParam {String} [email] Pusher email address.
+ * @apiParam {String} [phoneNumber] Pusher phone number.
+ * @apiParam {String} [realname] Pusher real name.
+ * @apiParam {String} [nickname] Pusher nickname.
+ * @apiParam {Number} [createdAt] Pusher created time.
+ */
+
 var r = render.New()
 
 func sendJSONResponse(w http.ResponseWriter, status int, key string, data interface{}) {
@@ -147,8 +168,7 @@ func pushAll(sender, data, schedat string) (string, error) {
  * @apiName addSender
  * @apiGroup Sender
  *
- * @apiParam {String} sender Sender name.
- * @apiParam {String} pusher Pusher unique ID.
+ * @apiUse SenderParam
  * @apiExample Example usage:
  * curl -i http://pusher_host/pusher/sendmail/add -d pusher=lupinno
  *
@@ -172,8 +192,7 @@ func handleAddSender(w http.ResponseWriter, req *http.Request, sender string) {
  * @apiName RemoveSender
  * @apiGroup Sender
  *
- * @apiParam {String} sender Sender name.
- * @apiParam {String} pusher Pusher unique ID.
+ * @apiUse SenderParam
  * @apiExample Example usage:
  * curl -i http://pusher_host/pusher/sendmail/delete -d pusher=lupinno
  *
@@ -225,10 +244,8 @@ func (f *pushForm) FieldMap(_ *http.Request) binding.FieldMap {
  * @apiName push
  * @apiGroup Push
  *
- * @apiParam {String} sender Sender name.
- * @apiParam {String} pusher Pusher unique ID.
- * @apiParam {String} data Sender data.
- * @apiParam {Number} [schedat] when to sched the job.
+ * @apiUse SenderParam
+ * @apiUse DataParam
  * @apiParam {Boolean} [force=false] force push.
  *
  * @apiExample Example usage:
@@ -284,8 +301,7 @@ func (f *pushAllForm) FieldMap(_ *http.Request) binding.FieldMap {
  * @apiGroup Push
  *
  * @apiParam {String} sender Sender name.
- * @apiParam {String} data Sender data.
- * @apiParam {String} [schedat] when to sched the job.
+ * @apiUse DataParam
  *
  * @apiExample Example usage:
  * curl -i http://pusher_host/pusher/sendmail/pushall \
@@ -518,12 +534,7 @@ func handleSearchPusher(w http.ResponseWriter, req *http.Request) {
  * @apiName AddPusher
  * @apiGroup Pusher
  *
- * @apiParam {String} pusher Pusher unique ID.
- * @apiParam {String} [email] Pusher email address.
- * @apiParam {String} [phoneNumber] Pusher phone number.
- * @apiParam {String} [realname] Pusher real name.
- * @apiParam {String} [nickname] Pusher nickname.
- * @apiParam {Number} [createdAt] Pusher created time.
+ * @apiUse PusherParam
  * @apiExample Example usage:
  * curl -i http://pusher_host/pusher/pushers/ \
  *      -d pusher=lupino \
@@ -586,13 +597,7 @@ func handleRemovePusher(w http.ResponseWriter, req *http.Request, pusher string)
  * @apiName UpdatePusher
  * @apiGroup Pusher
  *
- * @apiParam {String} pusher Pusher unique ID.
- *
- * @apiParam {String} [email] Pusher email address.
- * @apiParam {String} [phoneNumber] Pusher phone number.
- * @apiParam {String} [realname] Pusher real name.
- * @apiParam {String} [nickname] Pusher nickname.
- * @apiParam {Number} [createdAt] Pusher created time.
+ * @apiUse PusherParam
  * @apiExample Example usage:
  * curl -i http://pusher_host/pusher/pushers/lupino/ \
  *      -d email=lmjubuntu@gmail.com \
