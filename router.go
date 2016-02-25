@@ -250,6 +250,20 @@ func handlePushAll(w http.ResponseWriter, req *http.Request, sender string) {
 	sendJSONResponse(w, http.StatusOK, "result", map[string]string{"name": name, "status": "OK"})
 }
 
+func handleCancelPush(w http.ResponseWriter, req *http.Request, sender string) {
+	req.ParseForm()
+	var (
+		name = req.Form.Get("name")
+		err  error
+	)
+	if err = periodicClient.RemoveJob(PREFIX+sender, name); err != nil {
+		log.Printf("periodic.Client.RemoveJob() failed (%s)", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	sendJSONResponse(w, http.StatusOK, "result", map[string]string{"status": "OK"})
+}
+
 func wapperSenderHandle(handle func(http.ResponseWriter, *http.Request, string)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
@@ -488,6 +502,7 @@ func NewRouter() *mux.Router {
 	router.HandleFunc("/pusher/{sender}/pushers/", wapperSenderHandle(handleGetPushersBySender)).Methods("GET")
 	router.HandleFunc("/pusher/{sender}/delete", wapperSenderHandle(handleRemoveSender)).Methods("POST")
 	router.HandleFunc("/pusher/{sender}/push", wapperSenderHandle(handlePush)).Methods("POST")
+	router.HandleFunc("/pusher/{sender}/cancelpush", wapperSenderHandle(handleCancelPush)).Methods("POST")
 	router.HandleFunc("/pusher/{sender}/pushall", wapperSenderHandle(handlePushAll)).Methods("POST")
 	return router
 }
