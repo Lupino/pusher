@@ -20,8 +20,11 @@ func generateName(pusher, data string) string {
 }
 
 func extractPusher(name string) string {
-	parts := strings.SplitN(name, "_", 2)
-	return parts[0]
+	idx := strings.LastIndex(name, "_")
+	if idx == -1 {
+		return ""
+	}
+	return name[:idx]
 }
 
 func verifyData(expect, pusher, data string) bool {
