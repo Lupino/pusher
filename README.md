@@ -1,4 +1,15 @@
-A sample push server
+pusher
+==============
+pusher is a push server writen by golang.
+
+## Features
+ * Light weight
+ * High performance
+ * Pure Golang
+ * Supports single push and pushall
+ * Supports push or pushall with a schedule time
+ * Scalable architecture (Unlimited dynamic message and sender modules)
+ * Asynchronous push notification based on [Periodic task system](https://github.com/Lupino/periodic)
 
 Install
 -------
