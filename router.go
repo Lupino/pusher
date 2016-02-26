@@ -43,6 +43,25 @@ import (
  * @apiParam {Number} [createdAt] Pusher created time.
  */
 
+/**
+ * @apiDefine PushResult
+ * @apiSuccessExample {json} Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "result": "OK",
+ *       "name": "lupino_88bf72bd461965be993c0e6cee9cd061"
+ *     }
+ */
+
+/**
+ * @apiDefine ResultOK
+ * @apiSuccessExample {json} Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "result": "OK"
+ *     }
+ */
+
 var r = render.New()
 
 func sendJSONResponse(w http.ResponseWriter, status int, key string, data interface{}) {
@@ -267,6 +286,7 @@ func (f *pushForm) FieldMap(_ *http.Request) binding.FieldMap {
  *
  * @apiSuccess {String} result OK.
  * @apiSuccess {String} name The periodic job name.
+ * @apiUse PushResult
  *
  */
 func handlePush(w http.ResponseWriter, req *http.Request, sender string) {
@@ -321,6 +341,7 @@ func (f *pushAllForm) FieldMap(_ *http.Request) binding.FieldMap {
  *
  * @apiSuccess {String} result OK.
  * @apiSuccess {String} name The periodic job name.
+ * @apiUse PushResult
  *
  */
 func handlePushAll(w http.ResponseWriter, req *http.Request, sender string) {
@@ -356,6 +377,7 @@ func handlePushAll(w http.ResponseWriter, req *http.Request, sender string) {
  *      -d name=xxxxxx
  *
  * @apiSuccess {String} result OK.
+ * @apiUse ResultOK
  *
  */
 func handleCancelPush(w http.ResponseWriter, req *http.Request, sender string) {
@@ -568,6 +590,7 @@ func handleSearchPusher(w http.ResponseWriter, req *http.Request) {
  *
  *
  * @apiSuccess {String} result OK.
+ * @apiUse ResultOK
  *
  * @apiError {String} err pusher is required.
  */
@@ -602,6 +625,7 @@ func handleAddPusher(w http.ResponseWriter, req *http.Request) {
  * curl -i -XDELETE http://pusher_host/pusher/pushers/4711/
  *
  * @apiSuccess {String} result OK.
+ * @apiUse ResultOK
  *
  */
 func handleRemovePusher(w http.ResponseWriter, req *http.Request, pusher string) {
@@ -628,6 +652,7 @@ func handleRemovePusher(w http.ResponseWriter, req *http.Request, pusher string)
  *
  *
  * @apiSuccess {String} result OK.
+ * @apiUse ResultOK
  *
  * @apiError {String} err pusher <code> pusher </code> not exists.
  *
