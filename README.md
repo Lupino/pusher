@@ -100,6 +100,25 @@ var pushAllSender = senders.NewPushAllSender(...)
 pusher.RunWorker(pw, mailSender, smsSender, pushAllSender)
 ```
 
+Write you own sender
+--------------------
+
+Write you own sender with the `Sender` interface.
+see example [cmd/pusher_sample_worker](https://github.com/Lupino/pusher/tree/master/cmd/pusher_sample_worker)
+
+```go
+// Sender interface for pusher
+type Sender interface {
+	// GetName for the periodic funcName
+	GetName() string
+	// Send message to pusher then return sendlater
+	// if err != nil job fail
+	// if sendlater > 0 send later
+	// if sendlater == 0 send done
+	Send(pusher, data string) (sendlater int, err error)
+}
+```
+
 Requirements
 ------------
 
