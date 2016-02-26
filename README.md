@@ -15,6 +15,57 @@ Install
 -------
 
     go get -v github.com/Lupino/pusher
+    go install ./...
+
+Getting start with pusher command
+---------------------------------
+
+### First start the needed server
+* Start [Periodic task system](https://github.com/Lupino/periodic) with a sample command `periodic -d`
+* Start [Redis](http://redis.io) with the command `redis-server`
+
+### Second start pusher api server
+* Start pusher api server with the command `pusher`
+* The pusher api server default run on <http://localhost:6000>
+
+### Third start pusher worker
+* Go to <https://sendgrid.com/> register an account and get the `key` and `user`
+* Go to <http://www.alidayu.com/> register an account and build an app, then get the `app key` and `app secret`
+* Start pusher worker with the command
+
+```bash
+pusher_worker -sendgrid_key=sgKey \
+              -sendgrid_user=sgUser \
+              -from=example@example.com \
+              -from_name=example \
+              -alidayu_key=alidayuAppKey \
+              -alidayu_secret=alidayuAppSecret
+
+```
+
+### Fourth push the message with curl
+* Create a pusher
+```bash
+curl -i http://localhost:6000/pusher/pushers/ \
+     -d pusher=lupino \
+     -d email=example@example.com \
+     -d phoneNumber=12345678901 \
+     -d nickname=xxxxx \
+     -d createdAt=1456403493
+```
+* Add sender to pusher
+```bash
+curl -i http://localhost:6000/pusher/sendmail/add -d pusher=lupinno
+curl -i http://localhost:6000/pusher/sendsms/add -d pusher=lupinno
+```
+* Push a message
+```bash
+curl -i http://localhost:6000/pusher/sendmail/push \
+     -d pusher=lupino \
+     -d data='{"subject": "subject", "text": "text"}'
+```
+
+* Full api docs sees <http://lupino.github.io/pusher/>
 
 Usage
 -----
