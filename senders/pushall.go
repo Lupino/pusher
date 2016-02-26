@@ -4,12 +4,12 @@ import (
 	pusherLib "github.com/Lupino/pusher"
 )
 
-// PushAllSender a alidayu sms sender
+// PushAllSender a pushall sender to process pushall api
 type PushAllSender struct {
 	pusherRoot string
 }
 
-// NewPushAllSender new alidayu sms sender
+// NewPushAllSender new push all sender
 func NewPushAllSender(pusherRoot string) PushAllSender {
 	return PushAllSender{
 		pusherRoot: pusherRoot,
