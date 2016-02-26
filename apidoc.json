@@ -2,5 +2,9 @@
   "name": "pusher",
   "version": "0.1.0",
   "description": "pusher api document",
-  "title": "pusher api"
+  "title": "pusher api",
+  "header": {
+    "title": "Pusher Object",
+    "filename": "header.md"
+  }
 }
