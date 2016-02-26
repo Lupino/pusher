@@ -31,7 +31,7 @@ n.UseHandler(pusher.NewRouter())
 n.Run(":3000")
 ```
 
-pusher worker also see [cmd/sender](https://github.com/Lupino/pusher/tree/master/cmd/sender)
+pusher worker also see [cmd/pusher_worker](https://github.com/Lupino/pusher/tree/master/cmd/pusher_worker)
 
 ```go
 import (
