@@ -62,6 +62,16 @@ import (
  *     }
  */
 
+/**
+ * @apiDefine NotFoundError
+ * @apiError {String} err pusher <code>pusher</code> not exists.
+ * @apiErrorExample Response (example):
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "err": "pusher lupino not exists."
+ *     }
+ */
+
 var r = render.New()
 
 func sendJSONResponse(w http.ResponseWriter, status int, key string, data interface{}) {
@@ -72,11 +82,7 @@ func sendJSONResponse(w http.ResponseWriter, status int, key string, data interf
 	}
 }
 
-func addSender(pusher string, senders ...string) (err error) {
-	var p Pusher
-	if p, err = GetPusher(pusher); err != nil {
-		return
-	}
+func addSender(p Pusher, senders ...string) (err error) {
 	changed := false
 	for _, sender := range senders {
 		if p.AddSender(sender) {
@@ -92,11 +98,7 @@ func addSender(pusher string, senders ...string) (err error) {
 	return
 }
 
-func removeSender(pusher string, senders ...string) (err error) {
-	var p Pusher
-	if p, err = GetPusher(pusher); err != nil {
-		return
-	}
+func removeSender(p Pusher, senders ...string) (err error) {
 	changed := false
 	for _, sender := range senders {
 		if p.DelSender(sender) {
@@ -205,12 +207,19 @@ func pushAll(sender, data, schedat string) (string, error) {
  *
  *
  * @apiSuccess {String} result OK.
+ * @apiUse ResultOK
+ * @apiUse NotFoundError
  *
  */
 func handleAddSender(w http.ResponseWriter, req *http.Request, sender string) {
 	req.ParseForm()
 	pusher := req.Form.Get("pusher")
-	if err := addSender(pusher, sender); err != nil {
+	var p Pusher
+	if p, _ = GetPusher(pusher); p.ID == "" {
+		sendJSONResponse(w, http.StatusNotFound, "err", "pusher "+pusher+" not exists.")
+		return
+	}
+	if err := addSender(p, sender); err != nil {
 		log.Printf("addSender() failed (%s)", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -229,12 +238,19 @@ func handleAddSender(w http.ResponseWriter, req *http.Request, sender string) {
  *
  *
  * @apiSuccess {String} result OK.
+ * @apiUse ResultOK
+ * @apiUse NotFoundError
  *
  */
 func handleRemoveSender(w http.ResponseWriter, req *http.Request, sender string) {
 	req.ParseForm()
 	pusher := req.Form.Get("pusher")
-	if err := removeSender(pusher, sender); err != nil {
+	var p Pusher
+	if p, _ = GetPusher(pusher); p.ID == "" {
+		sendJSONResponse(w, http.StatusNotFound, "err", "pusher "+pusher+" not exists.")
+		return
+	}
+	if err := removeSender(p, sender); err != nil {
 		log.Printf("removeSender() failed (%s)", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -425,12 +441,7 @@ func wapperSenderHandle(handle func(http.ResponseWriter, *http.Request, string))
  *       }
  *     }
  *
- * @apiError {String} err pusher <code>pusher</code> not exists.
- * @apiErrorExample Response (example):
- *     HTTP/1.1 404 Not Found
- *     {
- *       "err": "pusher 4711 not exists."
- *     }
+ * @apiUse NotFoundError
  *
  */
 func handleGetPusher(w http.ResponseWriter, req *http.Request, pusher string) {
@@ -438,7 +449,7 @@ func handleGetPusher(w http.ResponseWriter, req *http.Request, pusher string) {
 	if err != nil {
 		log.Printf("GetPusher() failed (%s)", err)
 	}
-	if p.ID != pusher {
+	if p.ID == "" {
 		sendJSONResponse(w, http.StatusNotFound, "err", "pusher "+pusher+" not exists.")
 		return
 	}
@@ -460,6 +471,26 @@ func handleGetPusher(w http.ResponseWriter, req *http.Request, pusher string) {
  * @apiSuccess {Number} total total pushers.
  * @apiSuccess {Number} from describe how much and which part of the return pusher list
  * @apiSuccess {Number} size describe how much and which part of the return pusher list
+ * @apiSuccessExample {json} Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "pushers": [
+ *         {
+ *           "id": "lupino",
+ *           "email": "example@example.com",
+ *           "nickname": "Lupino",
+ *           "phoneNumber": "12345678901",
+ *           "senders": [ "sendmail", "sendsms" ],
+ *           "createdAt": 1456403493
+ *         },
+ *         ...
+ *         ...
+ *         ...
+ *       ],
+ *       "total": 1000,
+ *       "from": 0,
+ *       "size": 10
+ *     }
  *
  */
 func handleGetAllPusher(w http.ResponseWriter, req *http.Request) {
@@ -521,6 +552,34 @@ func handleGetAllPusher(w http.ResponseWriter, req *http.Request) {
  * @apiSuccess {Number} from describe how much and which part of the return pusher list
  * @apiSuccess {Number} size describe how much and which part of the return pusher list
  * @apiSuccess {String} q search keyword.
+ * @apiSuccessExample {json} Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "pushers": [
+ *         {
+ *           "id": "lupino",
+ *           "email": "example@example.com",
+ *           "nickname": "Lupino",
+ *           "phoneNumber": "12345678901",
+ *           "senders": [ "sendmail", "sendsms" ],
+ *           "createdAt": 1456403493
+ *         },
+ *         ...
+ *         ...
+ *         ...
+ *       ],
+ *       "total": 1000,
+ *       "from": 0,
+ *       "size": 10,
+ *       "q": "sendmail"
+ *     }
+ *
+ * @apiError {String} err q is required.
+ * @apiErrorExample Response (example):
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "err": "q is required."
+ *     }
  *
  */
 func handleSearchPusher(w http.ResponseWriter, req *http.Request) {
@@ -543,7 +602,7 @@ func handleSearchPusher(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if q == "" {
-		sendJSONResponse(w, http.StatusOK, "err", "q is required.")
+		sendJSONResponse(w, http.StatusNotAcceptable, "err", "q is required.")
 		return
 	}
 
@@ -593,6 +652,11 @@ func handleSearchPusher(w http.ResponseWriter, req *http.Request) {
  * @apiUse ResultOK
  *
  * @apiError {String} err pusher is required.
+ * @apiErrorExample Response (example):
+ *     HTTP/1.1 404 Not Found
+ *     {
+ *       "err": "pusher is required."
+ *     }
  */
 func handleAddPusher(w http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
@@ -654,7 +718,7 @@ func handleRemovePusher(w http.ResponseWriter, req *http.Request, pusher string)
  * @apiSuccess {String} result OK.
  * @apiUse ResultOK
  *
- * @apiError {String} err pusher <code> pusher </code> not exists.
+ * @apiUse NotFoundError
  *
  */
 func handleUpdatePusher(w http.ResponseWriter, req *http.Request, pusher string) {
@@ -705,6 +769,27 @@ func handleUpdatePusher(w http.ResponseWriter, req *http.Request, pusher string)
  * @apiSuccess {Number} from describe how much and which part of the return pusher list
  * @apiSuccess {Number} size describe how much and which part of the return pusher list
  * @apiSuccess {String} sender Sender of pusher
+ * @apiSuccessExample {json} Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "pushers": [
+ *         {
+ *           "id": "lupino",
+ *           "email": "example@example.com",
+ *           "nickname": "Lupino",
+ *           "phoneNumber": "12345678901",
+ *           "senders": [ "sendmail", "sendsms" ],
+ *           "createdAt": 1456403493
+ *         },
+ *         ...
+ *         ...
+ *         ...
+ *       ],
+ *       "total": 1000,
+ *       "from": 0,
+ *       "size": 10,
+ *       "sender": "sendmail"
+ *     }
  *
  */
 func handleGetPushersBySender(w http.ResponseWriter, req *http.Request, sender string) {
