@@ -1,10 +1,12 @@
 package senders
 
 import (
+	"bytes"
 	"encoding/json"
 	pusherLib "github.com/Lupino/pusher"
 	"github.com/sendgrid/sendgrid-go"
 	"log"
+	"text/template"
 )
 
 // MailSender a sendgrid send mail sender
@@ -34,10 +36,13 @@ func (MailSender) GetName() string {
 // Send message to pusher then return sendlater
 func (s MailSender) Send(pusher, data string) (int, error) {
 	var (
-		m    mail
-		err  error
-		name string
-		p    pusherLib.Pusher
+		m      mail
+		err    error
+		name   string
+		p      pusherLib.Pusher
+		text   string
+		tpl    *template.Template
+		buffer = bytes.NewBuffer(nil)
 	)
 	if err = json.Unmarshal([]byte(data), &m); err != nil {
 		log.Printf("json.Unmarshal() failed (%s)", err)
@@ -57,11 +62,22 @@ func (s MailSender) Send(pusher, data string) (int, error) {
 		name = p.NickName
 	}
 
+	text = m.Text
+	if tpl, err = template.New("text").Parse(m.Text); err != nil {
+		log.Printf("template.New().Parse() failed (%s)", err)
+	} else {
+		if err = tpl.Execute(buffer, p); err != nil {
+			log.Printf("template.Template.Execute() failed (%s)", err)
+		} else {
+			text = string(buffer.Bytes())
+		}
+	}
+
 	message := sendgrid.NewMail()
 	message.AddTo(p.Email)
 	message.AddToName(name)
 	message.SetSubject(m.Subject)
-	message.SetText(m.Text)
+	message.SetText(text)
 	message.SetFrom(s.from)
 	message.SetFromName(s.fromName)
 	err = s.sg.Send(message)

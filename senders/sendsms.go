@@ -1,6 +1,7 @@
 package senders
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/md5"
 	"encoding/hex"
@@ -12,6 +13,7 @@ import (
 	"net/url"
 	"sort"
 	"strings"
+	"text/template"
 	"time"
 )
 
@@ -48,9 +50,12 @@ func (SMSSender) GetName() string {
 // Send message to pusher then return sendlater
 func (s SMSSender) Send(pusher, data string) (int, error) {
 	var (
-		sms smsObject
-		err error
-		p   pusherLib.Pusher
+		sms    smsObject
+		err    error
+		p      pusherLib.Pusher
+		params string
+		tpl    *template.Template
+		buffer = bytes.NewBuffer(nil)
 	)
 	if err = json.Unmarshal([]byte(data), &sms); err != nil {
 		log.Printf("json.Unmarshal() failed (%s)", err)
@@ -66,7 +71,18 @@ func (s SMSSender) Send(pusher, data string) (int, error) {
 		return 0, nil
 	}
 
-	if err = s.SendSMS(p.PhoneNumber, sms.Params, sms.SignName, sms.Template); err != nil {
+	params = sms.Params
+	if tpl, err = template.New("smsParams").Parse(sms.Params); err != nil {
+		log.Printf("template.New().Parse() failed (%s)", err)
+	} else {
+		if err = tpl.Execute(buffer, p); err != nil {
+			log.Printf("template.Template.Execute() failed (%s)", err)
+		} else {
+			params = string(buffer.Bytes())
+		}
+	}
+
+	if err = s.SendSMS(p.PhoneNumber, params, sms.SignName, sms.Template); err != nil {
 		log.Printf("senders.SMSSender.SendSMS() failed (%s)", err)
 		return 0, nil
 	}
