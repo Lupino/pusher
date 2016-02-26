@@ -57,10 +57,7 @@ func (s MailSender) Send(pusher, data string) (int, error) {
 		return 0, nil
 	}
 
-	name = p.RealName
-	if name == "" {
-		name = p.NickName
-	}
+	name = p.NickName
 
 	text = m.Text
 	if tpl, err = template.New("text").Parse(m.Text); err != nil {

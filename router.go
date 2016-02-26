@@ -26,7 +26,6 @@ import (
  * @apiParam {String} pusher Pusher unique ID.
  * @apiParam {String} [email] Pusher email address.
  * @apiParam {String} [phoneNumber] Pusher phone number.
- * @apiParam {String} [realname] Pusher real name.
  * @apiParam {String} [nickname] Pusher nickname.
  * @apiParam {Number} [createdAt] Pusher created time.
  */
@@ -540,7 +539,6 @@ func handleSearchPusher(w http.ResponseWriter, req *http.Request) {
  *      -d pusher=lupino \
  *      -d email=lmjubuntu@gmail.com \
  *      -d phoneNumber=12345678901 \
- *      -d realname=xxx \
  *      -d nickname=xxx \
  *      -d createdAt=1456403493
  *
@@ -554,7 +552,6 @@ func handleAddPusher(w http.ResponseWriter, req *http.Request) {
 	var p = Pusher{}
 	p.ID = req.Form.Get("pusher")
 	p.Email = req.Form.Get("email")
-	p.RealName = req.Form.Get("realname")
 	p.NickName = req.Form.Get("nickname")
 	p.PhoneNumber = req.Form.Get("phoneNumber")
 	p.CreatedAt, _ = strconv.ParseInt(req.Form.Get("createdAt"), 10, 64)
@@ -602,7 +599,6 @@ func handleRemovePusher(w http.ResponseWriter, req *http.Request, pusher string)
  * curl -i http://pusher_host/pusher/pushers/lupino/ \
  *      -d email=lmjubuntu@gmail.com \
  *      -d phoneNumber=12345678901 \
- *      -d realname=xxx \
  *      -d nickname=xxx \
  *      -d createdAt=1456403493
  *
@@ -627,9 +623,6 @@ func handleUpdatePusher(w http.ResponseWriter, req *http.Request, pusher string)
 
 	if req.Form.Get("email") != "" {
 		p.Email = req.Form.Get("email")
-	}
-	if req.Form.Get("realname") != "" {
-		p.RealName = req.Form.Get("realname")
 	}
 	if req.Form.Get("nickname") != "" {
 		p.NickName = req.Form.Get("nickname")
