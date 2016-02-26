@@ -6,6 +6,7 @@ pusher is a push server writen by golang.
  * Light weight
  * High performance
  * Pure Golang
+ * Embeddable
  * Supports single push and pushall
  * Supports push or pushall with a schedule time
  * Scalable architecture (Unlimited dynamic message and sender modules)
@@ -67,29 +68,32 @@ curl -i http://localhost:6000/pusher/sendmail/push \
 
 * Full api docs sees <http://lupino.github.io/pusher/>
 
-Usage
------
+Use pusher as a package
+-----------------------
 
-pusher server also see [cmd/pusher](https://github.com/Lupino/pusher/tree/master/cmd/pusher)
+Embed pusher server to you current http server,
+also see [cmd/pusher](https://github.com/Lupino/pusher/tree/master/cmd/pusher)
 
 ```go
 import "github.com/Lupino/pusher"
-import "github.com/codegangsta/negroni"
+import "net/http"
 
 pusher.SetBackend(...)
-n := negroni.New(negroni.NewRecovery(), negroni.NewLogger())
-n.UseHandler(pusher.NewRouter())
-n.Run(":3000")
+r := pusher.NewRouter()
+http.ListenAndServe(":6000", r)
 ```
 
-pusher worker also see [cmd/pusher_worker](https://github.com/Lupino/pusher/tree/master/cmd/pusher_worker)
+Embed pusher worker to you current project,
+also see [cmd/pusher_worker](https://github.com/Lupino/pusher/tree/master/cmd/pusher_worker)
 
 ```go
 import (
 	"github.com/Lupino/pusher"
 	"github.com/Lupino/pusher/senders"
+	"github.com/Lupino/go-periodic"
 )
 
+pw := periodic.NewWorker()
 var mailSender = senders.NewMailSender(...)
 var smsSender = senders.NewSMSSender(...)
 var pushAllSender = senders.NewPushAllSender(...)
