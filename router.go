@@ -12,14 +12,27 @@ import (
 
 /**
  * @apiDefine SenderParam
- * @apiParam {String} sender Sender name.
+ * @apiParam {String=sendmail, sendsms, customSenderName} sender Sender name.
  * @apiParam {String} pusher Pusher unique ID.
  */
 
 /**
  * @apiDefine DataParam
- * @apiParam {String} data Sender data.
+ * @apiParam {Object} data Sender data.
  * @apiParam {Number} [schedat] when to sched the job.
+ * @apiParamExample {json} MailSender data example:
+ *     {
+ *       "subject": "subject",
+ *       "text": "this is the mail text, which use a `text/template` with some keyword {{.NickName}} {{.ID}}",
+ *       "createdAt": 1456403493
+ *     }
+ * @apiParamExample {json} SMSSender data example:
+ *     {
+ *       "signName": "sms sign name",
+ *       "template": "sms template",
+ *       "params": "this is the sms template params, which use a `text/template` with some keyword {{.NickName}} {{.ID}}",
+ *       "createdAt": 1456403493,
+ *     }
  */
 /**
  * @apiDefine PusherParam
@@ -299,7 +312,7 @@ func (f *pushAllForm) FieldMap(_ *http.Request) binding.FieldMap {
  * @apiName pushall
  * @apiGroup Push
  *
- * @apiParam {String} sender Sender name.
+ * @apiParam {String=sendmail, sendsms, customSenderName} sender Sender name.
  * @apiUse DataParam
  *
  * @apiExample Example usage:
@@ -335,7 +348,7 @@ func handlePushAll(w http.ResponseWriter, req *http.Request, sender string) {
  * @apiName cancelpush
  * @apiGroup Push
  *
- * @apiParam {String} sender Sender name or pushall.
+ * @apiParam {String=pushall, sendmail, sendsms, customSenderName} sender Sender name.
  * @apiParam {String} name The periodic job name.
  *
  * @apiExample Example usage:
@@ -343,7 +356,6 @@ func handlePushAll(w http.ResponseWriter, req *http.Request, sender string) {
  *      -d name=xxxxxx
  *
  * @apiSuccess {String} result OK.
- * @apiSuccess {String} name The periodic job name.
  *
  */
 func handleCancelPush(w http.ResponseWriter, req *http.Request, sender string) {
@@ -377,7 +389,19 @@ func wapperSenderHandle(handle func(http.ResponseWriter, *http.Request, string))
  * @apiExample Example usage:
  * curl -i http://pusher_host/pusher/pushers/4711/
  *
- * @apiSuccess {String} pusher Pusher object.
+ * @apiSuccess {Object} pusher Pusher object.
+ * @apiSuccessExample {json} Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "pusher": {
+ *         "id": "lupino",
+ *         "email": "example@example.com",
+ *         "nickname": "Lupino",
+ *         "phoneNumber": "12345678901",
+ *         "senders": [ "sendmail", "sendsms" ],
+ *         "createdAt": 1456403493
+ *       }
+ *     }
  *
  * @apiError {String} err pusher <code>pusher</code> not exists.
  * @apiErrorExample Response (example):
