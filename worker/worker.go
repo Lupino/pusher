@@ -1,14 +1,18 @@
-package pusher
+package worker
 
 import (
 	"github.com/Lupino/go-periodic"
+	"github.com/Lupino/pusher/utils"
 	"log"
 )
 
+// PREFIX the perfix key of pusher.
+const PREFIX = "pusher:"
+
 func warperSender(sender Sender) func(periodic.Job) {
 	return func(job periodic.Job) {
-		pusher := extractPusher(job.Name)
-		if !verifyData(job.Name, pusher, job.Args) {
+		pusher := utils.ExtractPusher(job.Name)
+		if !utils.VerifyData(job.Name, pusher, job.Args) {
 			log.Printf("verifyData() failed (%s) ignore\n", job.Name)
 			job.Done() // ignore invalid job
 			return
@@ -25,8 +29,8 @@ func warperSender(sender Sender) func(periodic.Job) {
 	}
 }
 
-// RunWorker defined new pusher worker
-func RunWorker(w *periodic.Worker, senders ...Sender) {
+// RunSender by periodic worker
+func RunSender(w *periodic.Worker, senders ...Sender) {
 	for _, sender := range senders {
 		w.AddFunc(PREFIX+sender.GetName(), warperSender(sender))
 		log.Printf("Loaded sender (%s)", sender.GetName())

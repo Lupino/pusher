@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 	"github.com/Lupino/go-periodic"
-	"github.com/Lupino/pusher"
-	"github.com/Lupino/pusher/senders"
+	"github.com/Lupino/pusher/worker"
+	"github.com/Lupino/pusher/worker/senders"
 	"github.com/sendgrid/sendgrid-go"
 	"log"
 )
@@ -42,5 +42,5 @@ func main() {
 	var mailSender = senders.NewMailSender(sg, from, fromName, pusherHost)
 	var smsSender = senders.NewSMSSender(dayuKey, dayuSecret, pusherHost)
 	var pushAllSender = senders.NewPushAllSender(pusherHost)
-	pusher.RunWorker(pw, mailSender, smsSender, pushAllSender)
+	worker.RunSender(pw, mailSender, smsSender, pushAllSender)
 }

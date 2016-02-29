@@ -1,6 +1,7 @@
 package pusher
 
 import (
+	"github.com/Lupino/pusher/utils"
 	"github.com/blevesearch/bleve"
 	"github.com/gorilla/mux"
 	"github.com/mholt/binding"
@@ -177,7 +178,7 @@ func push(sender, pusher, data, schedat string, force bool) (string, error) {
 		"args":    data,
 		"schedat": schedat,
 	}
-	var name = generateName(pusher, data)
+	var name = utils.GenerateName(pusher, data)
 	if err := periodicClient.SubmitJob(PREFIX+sender, name, opts); err != nil {
 		return "", err
 	}
@@ -189,7 +190,7 @@ func pushAll(sender, data, schedat string) (string, error) {
 		"args":    data,
 		"schedat": schedat,
 	}
-	var name = generateName(sender, data)
+	var name = utils.GenerateName(sender, data)
 	if err := periodicClient.SubmitJob(PREFIX+"pushall", name, opts); err != nil {
 		return "", err
 	}

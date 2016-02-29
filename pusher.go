@@ -6,6 +6,12 @@ import (
 	"log"
 )
 
+// PREFIX the perfix key of pusher.
+const PREFIX = "pusher:"
+
+// secondIndex name of pusher data.
+const secondIndex = "pusher:secondIndex"
+
 // Pusher of pusher
 type Pusher struct {
 	ID          string   `json:"id"`

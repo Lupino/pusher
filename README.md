@@ -88,8 +88,8 @@ also see [cmd/pusher_worker](https://github.com/Lupino/pusher/tree/master/cmd/pu
 
 ```go
 import (
-	"github.com/Lupino/pusher"
-	"github.com/Lupino/pusher/senders"
+	"github.com/Lupino/pusher/worker"
+	"github.com/Lupino/pusher/worker/senders"
 	"github.com/Lupino/go-periodic"
 )
 
@@ -97,7 +97,7 @@ pw := periodic.NewWorker()
 var mailSender = senders.NewMailSender(...)
 var smsSender = senders.NewSMSSender(...)
 var pushAllSender = senders.NewPushAllSender(...)
-pusher.RunWorker(pw, mailSender, smsSender, pushAllSender)
+worker.RunSender(pw, mailSender, smsSender, pushAllSender)
 ```
 
 Write you own sender

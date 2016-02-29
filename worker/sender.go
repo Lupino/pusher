@@ -1,4 +1,4 @@
-package pusher
+package worker
 
 // Sender interface for pusher
 type Sender interface {

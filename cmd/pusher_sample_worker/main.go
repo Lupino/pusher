@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"github.com/Lupino/go-periodic"
-	"github.com/Lupino/pusher"
+	"github.com/Lupino/pusher/worker"
 	"log"
 )
 
@@ -39,5 +39,5 @@ func main() {
 	if err := pw.Connect(periodicPort); err != nil {
 		log.Fatal(err)
 	}
-	pusher.RunWorker(pw, sampleSender{})
+	worker.RunSender(pw, sampleSender{})
 }
