@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	pusherLib "github.com/Lupino/pusher"
 	"github.com/Lupino/pusher/worker"
+	"log"
 )
 
 // PushAllSender a pushall sender to process pushall api
