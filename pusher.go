@@ -2,15 +2,12 @@ package pusher
 
 import (
 	"encoding/json"
-	"gopkg.in/redis.v3"
-	"log"
+	"github.com/Lupino/go-periodic"
+	"github.com/Lupino/pusher/utils"
 )
 
 // PREFIX the perfix key of pusher.
 const PREFIX = "pusher:"
-
-// secondIndex name of pusher data.
-const secondIndex = "pusher:secondIndex"
 
 // Pusher of pusher
 type Pusher struct {
@@ -23,8 +20,8 @@ type Pusher struct {
 }
 
 // NewPusher create a pusher from json bytes
-func NewPusher(payload string) (pusher Pusher, err error) {
-	err = json.Unmarshal([]byte(payload), &pusher)
+func NewPusher(payload []byte) (pusher Pusher, err error) {
+	err = json.Unmarshal(payload, &pusher)
 	return
 }
 
@@ -69,45 +66,69 @@ func (pusher *Pusher) DelSender(sender string) bool {
 	return true
 }
 
-// SetPusher to redis and index
-func SetPusher(pusher Pusher) error {
-	var key = PREFIX + "pusher:" + pusher.ID
-	if err := redisClient.Set(key, pusher.Bytes(), 0).Err(); err != nil {
-		log.Printf("redis.Client.Set() failed(%s)", err)
-		return err
-	}
-	if err := redisClient.ZAdd(secondIndex, redis.Z{Score: float64(pusher.CreatedAt), Member: pusher.ID}).Err(); err != nil {
-		log.Printf("redis.Client.ZAdd() failed(%s)", err)
-	}
-	if err := index.Index(pusher.ID, pusher); err != nil {
-		log.Printf("bleve.Index.Index() failed(%s)", err)
-	}
-	return nil
+// SPusher server pusher
+type SPusher struct {
+	storer Storer
+	p      *periodic.Client
 }
 
-// GetPusher from redis by id
-func GetPusher(id string) (pusher Pusher, err error) {
-	var payload string
-	var key = PREFIX + "pusher:" + id
-	if payload, err = redisClient.Get(key).Result(); err != nil {
-		log.Printf("redis.Client.Get() failed(%s)", err)
-		return
-	}
-	return NewPusher(payload)
+// NewSPusher create a server pusher instance
+func NewSPusher(storer Storer, p *periodic.Client) SPusher {
+	return SPusher{storer: storer, p: p}
 }
 
-// DelPusher from redis by id
-func DelPusher(id string) error {
-	var key = PREFIX + "pusher:" + id
-	if err := redisClient.Del(key).Err(); err != nil {
-		log.Printf("redis.Client.Del() failed(%s)", err)
-		return err
+func (s SPusher) addSender(p Pusher, senders ...string) (err error) {
+	changed := false
+	for _, sender := range senders {
+		if p.AddSender(sender) {
+			changed = true
+		}
 	}
-	if err := redisClient.ZRem(secondIndex, id).Err(); err != nil {
-		log.Printf("redis.Client.ZRem() failed(%s)", err)
+
+	if changed {
+		if err = s.storer.Set(p); err != nil {
+			return
+		}
 	}
-	if err := index.Delete(id); err != nil {
-		log.Printf("bleve.Index.Index() failed(%s)", err)
+	return
+}
+
+func (s SPusher) removeSender(p Pusher, senders ...string) (err error) {
+	changed := false
+	for _, sender := range senders {
+		if p.DelSender(sender) {
+			changed = true
+		}
 	}
-	return nil
+
+	if changed {
+		if err = s.storer.Set(p); err != nil {
+			return
+		}
+	}
+	return
+}
+
+func (s SPusher) push(sender, pusher, data, schedat string) (string, error) {
+	var opts = map[string]string{
+		"args":    data,
+		"schedat": schedat,
+	}
+	var name = utils.GenerateName(pusher, data)
+	if err := s.p.SubmitJob(PREFIX+sender, name, opts); err != nil {
+		return "", err
+	}
+	return name, nil
+}
+
+func (s SPusher) pushAll(sender, data, schedat string) (string, error) {
+	var opts = map[string]string{
+		"args":    data,
+		"schedat": schedat,
+	}
+	var name = utils.GenerateName(sender, data)
+	if err := s.p.SubmitJob(PREFIX+"pushall", name, opts); err != nil {
+		return "", err
+	}
+	return name, nil
 }
