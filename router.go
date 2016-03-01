@@ -623,77 +623,6 @@ func (s SPusher) handleUpdatePusher(w http.ResponseWriter, req *http.Request, pu
 	sendJSONResponse(w, http.StatusOK, "result", "OK")
 }
 
-/**
- * @api {get} /pusher/:sender/pushers/ Get pusher list by sender
- * @apiName GetPusherListBySender
- * @apiGroup Pusher
- *
- * @apiParam {String} sender Sender of pusher.
- * @apiParam {Number} [from=0] describe how much and which part of the return pusher list
- * @apiParam {Number} [size=10] describe how much and which part of the return pusher list
- * @apiExample Example usage:
- * curl -i http://pusher_host/pusher/sendmail/pushers/?from=0&size=20
- *
- * @apiSuccess {String} pushers Pusher object list.
- * @apiSuccess {Number} total total pushers.
- * @apiSuccess {Number} from describe how much and which part of the return pusher list
- * @apiSuccess {Number} size describe how much and which part of the return pusher list
- * @apiSuccess {String} sender Sender of pusher
- * @apiSuccessExample {json} Success-Response:
- *     HTTP/1.1 200 OK
- *     {
- *       "pushers": [
- *         {
- *           "id": "lupino",
- *           "email": "example@example.com",
- *           "nickname": "Lupino",
- *           "phoneNumber": "12345678901",
- *           "senders": [ "sendmail", "sendsms" ],
- *           "createdAt": 1456403493
- *         },
- *         ...
- *         ...
- *         ...
- *       ],
- *       "total": 1000,
- *       "from": 0,
- *       "size": 10,
- *       "sender": "sendmail"
- *     }
- *
- */
-func (s SPusher) handleGetPushersBySender(w http.ResponseWriter, req *http.Request, sender string) {
-	var qs = req.URL.Query()
-	var err error
-	var from, size int
-	var pushers []Pusher
-	var total uint64
-	if from, err = strconv.Atoi(qs.Get("from")); err != nil {
-		from = 0
-	}
-
-	if size, err = strconv.Atoi(qs.Get("size")); err != nil {
-		size = 10
-	}
-
-	if size > 100 {
-		size = 100
-	}
-
-	total, pushers, err = s.storer.Search("senders:"+sender, from, size)
-	if err != nil {
-		log.Printf("Storer.Search() failed (%s)", err)
-	}
-
-	sendJSONResponse(w, http.StatusOK, "", map[string]interface{}{
-		"pushers": pushers,
-		"total":   total,
-		"from":    from,
-		"size":    size,
-		"sender":  sender,
-	})
-}
-
 func wapperPusherHandle(handle func(http.ResponseWriter, *http.Request, string)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
@@ -714,7 +643,6 @@ func (s SPusher) NewRouter() *mux.Router {
 	router.HandleFunc("/pusher/pushers/{pusher}/", wapperPusherHandle(s.handleUpdatePusher)).Methods("POST")
 
 	router.HandleFunc("/pusher/{sender}/add", wapperSenderHandle(s.handleAddSender)).Methods("POST")
-	router.HandleFunc("/pusher/{sender}/pushers/", wapperSenderHandle(s.handleGetPushersBySender)).Methods("GET")
 	router.HandleFunc("/pusher/{sender}/delete", wapperSenderHandle(s.handleRemoveSender)).Methods("POST")
 	router.HandleFunc("/pusher/{sender}/push", wapperSenderHandle(s.handlePush)).Methods("POST")
 	router.HandleFunc("/pusher/{sender}/cancelpush", wapperSenderHandle(s.handleCancelPush)).Methods("POST")
