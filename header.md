@@ -8,6 +8,7 @@ type Pusher struct {
 	NickName    string   `json:"nickname"`
 	PhoneNumber string   `json:"phoneNumber"`
 	Senders     []string `json:"senders"`
+	Tags        []string `json:"tags"`
 	CreatedAt   int64    `json:"createdAt"`
 }
 ```

@@ -16,6 +16,12 @@ import (
  */
 
 /**
+ * @apiDefine TagParam
+ * @apiParam {String} tag some tag.
+ * @apiParam {String} pusher Pusher unique ID.
+ */
+
+/**
  * @apiDefine DataParam
  * @apiParam {Object} data Sender data.
  * @apiParam {Number} [schedat] when to sched the job.
@@ -113,7 +119,7 @@ func (s SPusher) handleAddSender(w http.ResponseWriter, req *http.Request, sende
 }
 
 /**
- * @api {post} /pusher/:sender/delete delete sender from an exists pusher.
+ * @api {post} /pusher/:sender/delete Delete sender from an exists pusher.
  * @apiName RemoveSender
  * @apiGroup Sender
  *
@@ -137,6 +143,64 @@ func (s SPusher) handleRemoveSender(w http.ResponseWriter, req *http.Request, se
 	}
 	if err := s.removeSender(p, sender); err != nil {
 		log.Printf("removeSender() failed (%s)", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	sendJSONResponse(w, http.StatusOK, "result", "OK")
+}
+
+/**
+ * @api {post} /pusher/pushers/:pusher/:tag/ Add a pusher tag.
+ * @apiName addTag
+ * @apiGroup Tag
+ *
+ * @apiUse TagParam
+ * @apiExample Example usage:
+ * curl -i -XPOST http://pusher_host/pusher/pushers/lupino/friends/
+ *
+ *
+ * @apiSuccess {String} result OK.
+ * @apiUse ResultOK
+ * @apiUse NotFoundError
+ *
+ */
+func (s SPusher) handleAddTag(w http.ResponseWriter, req *http.Request, pusher, tag string) {
+	var p Pusher
+	if p, _ = s.storer.Get(pusher); p.ID == "" {
+		sendJSONResponse(w, http.StatusNotFound, "err", "pusher "+pusher+" not exists.")
+		return
+	}
+	if err := s.addTag(p, tag); err != nil {
+		log.Printf("addTag() failed (%s)", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	sendJSONResponse(w, http.StatusOK, "result", "OK")
+}
+
+/**
+ * @api {delete} /pusher/pushers/:pusher/:tag/ Delete a pusher tag.
+ * @apiName RemoveTag
+ * @apiGroup Tag
+ *
+ * @apiUse TagParam
+ * @apiExample Example usage:
+ * curl -i -XDELETE http://pusher_host/pusher/pushers/lupino/friends/
+ *
+ *
+ * @apiSuccess {String} result OK.
+ * @apiUse ResultOK
+ * @apiUse NotFoundError
+ *
+ */
+func (s SPusher) handleRemoveTag(w http.ResponseWriter, req *http.Request, pusher, tag string) {
+	var p Pusher
+	if p, _ = s.storer.Get(pusher); p.ID == "" {
+		sendJSONResponse(w, http.StatusNotFound, "err", "pusher "+pusher+" not exists.")
+		return
+	}
+	if err := s.removeTag(p, tag); err != nil {
+		log.Printf("removeTag() failed (%s)", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -631,6 +695,15 @@ func wapperPusherHandle(handle func(http.ResponseWriter, *http.Request, string))
 	}
 }
 
+func wapperTagHandle(handle func(http.ResponseWriter, *http.Request, string, string)) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		vars := mux.Vars(req)
+		pusher := vars["pusher"]
+		tag := vars["tag"]
+		handle(w, req, pusher, tag)
+	}
+}
+
 // NewRouter return new pusher router
 func (s SPusher) NewRouter() *mux.Router {
 	router := mux.NewRouter()
@@ -642,8 +715,12 @@ func (s SPusher) NewRouter() *mux.Router {
 	router.HandleFunc("/pusher/pushers/{pusher}/", wapperPusherHandle(s.handleRemovePusher)).Methods("DELETE")
 	router.HandleFunc("/pusher/pushers/{pusher}/", wapperPusherHandle(s.handleUpdatePusher)).Methods("POST")
 
+	router.HandleFunc("/pusher/pushers/{pusher}/{tag}/", wapperTagHandle(s.handleRemoveTag)).Methods("DELETE")
+	router.HandleFunc("/pusher/pushers/{pusher}/{tag}/", wapperTagHandle(s.handleAddTag)).Methods("POST")
+
 	router.HandleFunc("/pusher/{sender}/add", wapperSenderHandle(s.handleAddSender)).Methods("POST")
 	router.HandleFunc("/pusher/{sender}/delete", wapperSenderHandle(s.handleRemoveSender)).Methods("POST")
+
 	router.HandleFunc("/pusher/{sender}/push", wapperSenderHandle(s.handlePush)).Methods("POST")
 	router.HandleFunc("/pusher/{sender}/cancelpush", wapperSenderHandle(s.handleCancelPush)).Methods("POST")
 	router.HandleFunc("/pusher/{sender}/pushall", wapperSenderHandle(s.handlePushAll)).Methods("POST")

@@ -16,6 +16,7 @@ type Pusher struct {
 	NickName    string   `json:"nickname"`
 	PhoneNumber string   `json:"phoneNumber"`
 	Senders     []string `json:"senders"`
+	Tags        []string `json:"tags"`
 	CreatedAt   int64    `json:"createdAt"`
 }
 
@@ -66,6 +67,41 @@ func (pusher *Pusher) DelSender(sender string) bool {
 	return true
 }
 
+// HasTag on a pusher
+func (pusher Pusher) HasTag(sender string) bool {
+	for _, s := range pusher.Tags {
+		if sender == s {
+			return true
+		}
+	}
+	return false
+}
+
+// AddTag to a pusher
+func (pusher *Pusher) AddTag(sender string) bool {
+	if !pusher.HasTag(sender) {
+		pusher.Tags = append(pusher.Tags, sender)
+		return true
+	}
+	return false
+}
+
+// DelTag to a pusher
+func (pusher *Pusher) DelTag(sender string) bool {
+	var newTags []string
+	if !pusher.HasTag(sender) {
+		return false
+	}
+	for _, s := range pusher.Tags {
+		if sender == s {
+			continue
+		}
+		newTags = append(newTags, s)
+	}
+	pusher.Tags = newTags
+	return true
+}
+
 // SPusher server pusher
 type SPusher struct {
 	storer Storer
@@ -97,6 +133,38 @@ func (s SPusher) removeSender(p Pusher, senders ...string) (err error) {
 	changed := false
 	for _, sender := range senders {
 		if p.DelSender(sender) {
+			changed = true
+		}
+	}
+
+	if changed {
+		if err = s.storer.Set(p); err != nil {
+			return
+		}
+	}
+	return
+}
+
+func (s SPusher) addTag(p Pusher, tags ...string) (err error) {
+	changed := false
+	for _, tag := range tags {
+		if p.AddTag(tag) {
+			changed = true
+		}
+	}
+
+	if changed {
+		if err = s.storer.Set(p); err != nil {
+			return
+		}
+	}
+	return
+}
+
+func (s SPusher) removeTag(p Pusher, tags ...string) (err error) {
+	changed := false
+	for _, tag := range tags {
+		if p.DelTag(tag) {
 			changed = true
 		}
 	}
