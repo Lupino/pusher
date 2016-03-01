@@ -78,9 +78,8 @@ also see [cmd/pusher](https://github.com/Lupino/pusher/tree/master/cmd/pusher)
 import "github.com/Lupino/pusher"
 import "net/http"
 
-pusher.SetBackend(...)
-r := pusher.NewRouter()
-http.ListenAndServe(":6000", r)
+p := pusher.NewSPusher(...)
+http.ListenAndServe(":6000", p.NewRouter())
 ```
 
 Embed pusher worker to you current project,
@@ -94,10 +93,11 @@ import (
 )
 
 pw := periodic.NewWorker()
-var mailSender = senders.NewMailSender(...)
-var smsSender = senders.NewSMSSender(...)
-var pushAllSender = senders.NewPushAllSender(...)
-worker.RunSender(pw, mailSender, smsSender, pushAllSender)
+w := worker.New(pw, periodicHost)
+var mailSender = senders.NewMailSender(w, ...)
+var smsSender = senders.NewSMSSender(w, ...)
+var pushAllSender = senders.NewPushAllSender(w, ...)
+w.RunSender(mailSender, smsSender, pushAllSender)
 ```
 
 Write you own sender
@@ -119,9 +119,24 @@ type Sender interface {
 }
 ```
 
+Write you own backend storage
+-----------------------------
+Write you own backend with the `Storer` interface.
+see example [store/boltdb](https://github.com/Lupino/pusher/tree/master/store/boltdb)
+
+```go
+// Storer interface for store pusher data
+type Storer interface {
+	Set(Pusher) error
+	Get(string) (Pusher, error)
+	Del(string) error
+	Search(string, int, int) (uint64, []Pusher, error)
+	GetAll(from, size int) (uint64, []Pusher, error)
+}
+```
+
 Requirements
 ------------
 
 * [golang](http://golang.org)
 * [periodic](https://github.com/Lupino/periodic)
-* [Redis](http://redis.io)
