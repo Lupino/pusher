@@ -35,28 +35,28 @@ func GetPusher(host, pusher string) (p pusherLib.Pusher, err error) {
 	return
 }
 
-type getPushersBySenderResult struct {
+type searchPusherResult struct {
 	Pushers []pusherLib.Pusher `json:"pushers"`
 	From    int                `json:"from"`
 	Size    int                `json:"size"`
 	Total   int                `json:"total"`
-	Sender  string             `json:"sender"`
+	Q       string             `json:"q"`
 }
 
-// GetPushersBySender from api
-func GetPushersBySender(host, sender string, from, size int) (total int, pushers []pusherLib.Pusher, err error) {
+// SearchPusher from api
+func SearchPusher(host, q string, from, size int) (total int, pushers []pusherLib.Pusher, err error) {
 	var rsp *http.Response
-	var url = fmt.Sprintf("http://%s/pusher/%s/pushers/?from=%d&size=%d", host, sender, from, size)
+	var url = fmt.Sprintf("http://%s/pusher/search/?q=%s&from=%d&size=%d", host, q, from, size)
 	if rsp, err = http.Get(url); err != nil {
 		log.Printf("http.Get() failed (%s)", err)
 		return
 	}
 	defer rsp.Body.Close()
 	if int(rsp.StatusCode/100) != 2 {
-		err = fmt.Errorf("load sender[%s] failed", sender)
+		err = fmt.Errorf("search pusher [%s] failed", q)
 		return
 	}
-	var ret getPushersBySenderResult
+	var ret searchPusherResult
 	decoder := json.NewDecoder(rsp.Body)
 	if err = decoder.Decode(&ret); err != nil {
 		log.Printf("json.NewDecoder().Decode() failed (%s)", err)

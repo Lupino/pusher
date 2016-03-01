@@ -30,12 +30,12 @@ func (s PushAllSender) Send(sender, data string) (int, error) {
 		from    = 0
 		size    = 10
 	)
-	if total, pushers, err = GetPushersBySender(s.pusherRoot, sender, from, size); err != nil {
+	if total, pushers, err = SearchPusher(s.pusherRoot, "senders:"+sender, from, size); err != nil {
 		return 10, nil
 	}
 	s.pushs(sender, pushers, data)
 	for from = size; from < total; from = from + size {
-		_, pushers, _ = GetPushersBySender(s.pusherRoot, sender, from, size)
+		_, pushers, _ = SearchPusher(s.pusherRoot, "senders:"+sender, from, size)
 		s.pushs(sender, pushers, data)
 	}
 	return 0, nil
