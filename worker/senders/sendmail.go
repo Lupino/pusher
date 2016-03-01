@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	pusherLib "github.com/Lupino/pusher"
+	"github.com/Lupino/pusher/worker"
 	"github.com/sendgrid/sendgrid-go"
 	"log"
 	"text/template"
@@ -11,15 +12,15 @@ import (
 
 // MailSender a sendgrid send mail sender
 type MailSender struct {
-	sg         *sendgrid.SGClient
-	from       string
-	fromName   string
-	pusherHost string
+	sg       *sendgrid.SGClient
+	from     string
+	fromName string
+	w        worker.Worker
 }
 
 // NewMailSender new sendgrid send mail sender
-func NewMailSender(sg *sendgrid.SGClient, from, fromName, pusherHost string) MailSender {
-	return MailSender{sg: sg, from: from, fromName: fromName, pusherHost: pusherHost}
+func NewMailSender(w worker.Worker, sg *sendgrid.SGClient, from, fromName string) MailSender {
+	return MailSender{sg: sg, from: from, fromName: fromName, w: w}
 }
 
 type mail struct {
@@ -49,7 +50,7 @@ func (s MailSender) Send(pusher, data string) (int, error) {
 		return 0, nil
 	}
 
-	if p, err = GetPusher(s.pusherHost, pusher); err != nil {
+	if p, err = s.w.GetAPI().GetPusher(pusher); err != nil {
 		return 0, nil
 	}
 

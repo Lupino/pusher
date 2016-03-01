@@ -39,5 +39,7 @@ func main() {
 	if err := pw.Connect(periodicPort); err != nil {
 		log.Fatal(err)
 	}
-	worker.RunSender(pw, sampleSender{})
+
+	w := worker.New(pw, "")
+	w.RunSender(sampleSender{})
 }

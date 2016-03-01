@@ -38,9 +38,10 @@ func main() {
 		log.Fatal(err)
 	}
 
+	w := worker.New(pw, pusherHost)
 	var sg = sendgrid.NewSendGridClient(sgUser, sgKey)
-	var mailSender = senders.NewMailSender(sg, from, fromName, pusherHost)
-	var smsSender = senders.NewSMSSender(dayuKey, dayuSecret, pusherHost)
-	var pushAllSender = senders.NewPushAllSender(pusherHost)
-	worker.RunSender(pw, mailSender, smsSender, pushAllSender)
+	var mailSender = senders.NewMailSender(w, sg, from, fromName)
+	var smsSender = senders.NewSMSSender(w, dayuKey, dayuSecret)
+	var pushAllSender = senders.NewPushAllSender(w)
+	w.RunSender(mailSender, smsSender, pushAllSender)
 }

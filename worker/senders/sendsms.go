@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	pusherLib "github.com/Lupino/pusher"
+	"github.com/Lupino/pusher/worker"
 	"log"
 	"net/http"
 	"net/url"
@@ -21,17 +22,17 @@ var apiRoot = "http://gw.api.taobao.com/router/rest"
 
 // SMSSender a alidayu sms sender
 type SMSSender struct {
-	appKey     string
-	appSecret  string
-	pusherHost string
+	appKey    string
+	appSecret string
+	w         worker.Worker
 }
 
 // NewSMSSender new alidayu sms sender
-func NewSMSSender(key, secret, pusherHost string) SMSSender {
+func NewSMSSender(w worker.Worker, key, secret string) SMSSender {
 	return SMSSender{
-		appKey:     key,
-		appSecret:  secret,
-		pusherHost: pusherHost,
+		appKey:    key,
+		appSecret: secret,
+		w:         w,
 	}
 }
 
@@ -62,8 +63,8 @@ func (s SMSSender) Send(pusher, data string) (int, error) {
 		return 0, nil
 	}
 
-	if p, err = GetPusher(s.pusherHost, pusher); err != nil {
-		log.Printf("pusher.GetPusher() failed (%s)", err)
+	if p, err = s.w.GetAPI().GetPusher(pusher); err != nil {
+		log.Printf("worker.API.GetPusher() failed (%s)", err)
 		return 0, nil
 	}
 

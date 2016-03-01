@@ -29,11 +29,30 @@ func warperSender(sender Sender) func(periodic.Job) {
 	}
 }
 
+// Worker for pusher
+type Worker struct {
+	w   *periodic.Worker
+	api API
+}
+
+// New worker
+func New(w *periodic.Worker, host string) Worker {
+	return Worker{
+		w:   w,
+		api: API{host: host},
+	}
+}
+
 // RunSender by periodic worker
-func RunSender(w *periodic.Worker, senders ...Sender) {
+func (w Worker) RunSender(senders ...Sender) {
 	for _, sender := range senders {
-		w.AddFunc(PREFIX+sender.GetName(), warperSender(sender))
+		w.w.AddFunc(PREFIX+sender.GetName(), warperSender(sender))
 		log.Printf("Loaded sender (%s)", sender.GetName())
 	}
-	w.Work()
+	w.w.Work()
+}
+
+// GetAPI return some implement pusher client api
+func (w Worker) GetAPI() API {
+	return w.api
 }

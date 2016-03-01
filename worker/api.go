@@ -1,4 +1,4 @@
-package senders
+package worker
 
 import (
 	"encoding/json"
@@ -9,10 +9,15 @@ import (
 	"net/url"
 )
 
+// API of pusher server
+type API struct {
+	host string
+}
+
 // GetPusher from api
-func GetPusher(host, pusher string) (p pusherLib.Pusher, err error) {
+func (api API) GetPusher(pusher string) (p pusherLib.Pusher, err error) {
 	var rsp *http.Response
-	if rsp, err = http.Get("http://" + host + "/pusher/pushers/" + pusher + "/"); err != nil {
+	if rsp, err = http.Get("http://" + api.host + "/pusher/pushers/" + pusher + "/"); err != nil {
 		log.Printf("http.Get() failed (%s)", err)
 		return
 	}
@@ -44,9 +49,9 @@ type searchPusherResult struct {
 }
 
 // SearchPusher from api
-func SearchPusher(host, q string, from, size int) (total int, pushers []pusherLib.Pusher, err error) {
+func (api API) SearchPusher(q string, from, size int) (total int, pushers []pusherLib.Pusher, err error) {
 	var rsp *http.Response
-	var url = fmt.Sprintf("http://%s/pusher/search/?q=%s&from=%d&size=%d", host, q, from, size)
+	var url = fmt.Sprintf("http://%s/pusher/search/?q=%s&from=%d&size=%d", api.host, q, from, size)
 	if rsp, err = http.Get(url); err != nil {
 		log.Printf("http.Get() failed (%s)", err)
 		return
@@ -66,12 +71,12 @@ func SearchPusher(host, q string, from, size int) (total int, pushers []pusherLi
 }
 
 // Push message to pusher server by api
-func Push(host, sender, pusher, data string) (err error) {
+func (api API) Push(sender, pusher, data string) (err error) {
 	var rsp *http.Response
 	var form = url.Values{}
 	form.Set("pusher", pusher)
 	form.Set("data", data)
-	if rsp, err = http.PostForm("http://"+host+"/pusher/"+sender+"/push", form); err != nil {
+	if rsp, err = http.PostForm("http://"+api.host+"/pusher/"+sender+"/push", form); err != nil {
 		log.Printf("http.PostForm() failed (%s)", err)
 		return
 	}
