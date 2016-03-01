@@ -1,6 +1,7 @@
 package senders
 
 import (
+	"encoding/json"
 	pusherLib "github.com/Lupino/pusher"
 	"github.com/Lupino/pusher/worker"
 )
@@ -25,20 +26,30 @@ func (PushAllSender) GetName() string {
 // Send message to pusher then return sendlater
 func (s PushAllSender) Send(sender, data string) (int, error) {
 	var (
-		err     error
-		pushers []pusherLib.Pusher
-		total   int
-		from    = 0
-		size    = 10
+		err      error
+		pushers  []pusherLib.Pusher
+		total    int
+		from     = 0
+		size     = 10
+		query    = "senders:" + sender
+		workdata map[string]string
 	)
+	if err = json.Unmarshal([]byte(data), &workdata); err != nil {
+		log.Printf("json.Unmarshal() failed (%s)", err)
+		return 0, nil
+	}
+
+	if tag, ok := workdata["tag"]; ok && len(tag) > 0 {
+		query = query + " tags:" + tag
+	}
 
 	api := s.w.GetAPI()
-	if total, pushers, err = api.SearchPusher("senders:"+sender, from, size); err != nil {
+	if total, pushers, err = api.SearchPusher(query, from, size); err != nil {
 		return 10, nil
 	}
-	s.pushs(sender, pushers, data)
+	s.pushs(sender, pushers, workdata["data"])
 	for from = size; from < total; from = from + size {
-		_, pushers, _ = api.SearchPusher("senders:"+sender, from, size)
+		_, pushers, _ = api.SearchPusher(query, from, size)
 		s.pushs(sender, pushers, data)
 	}
 	return 0, nil

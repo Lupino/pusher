@@ -1,6 +1,7 @@
 package pusher
 
 import (
+	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/mholt/binding"
 	"github.com/unrolled/render"
@@ -287,6 +288,7 @@ func (s SPusher) handlePush(w http.ResponseWriter, req *http.Request, sender str
 
 type pushAllForm struct {
 	Data    string
+	Tag     string
 	SchedAt string
 }
 
@@ -300,6 +302,10 @@ func (f *pushAllForm) FieldMap(_ *http.Request) binding.FieldMap {
 			Form:     "schedat",
 			Required: false,
 		},
+		&f.Tag: binding.Field{
+			Form:     "tag",
+			Required: false,
+		},
 	}
 }
 
@@ -310,6 +316,7 @@ func (f *pushAllForm) FieldMap(_ *http.Request) binding.FieldMap {
  *
  * @apiParam {String=sendmail, sendsms, customSenderName} sender Sender name.
  * @apiUse DataParam
+ * @apiParam {String} [tag] push all to the pusher which has a tag.
  *
  * @apiExample Example usage:
  * curl -i http://pusher_host/pusher/sendmail/pushall \
@@ -331,7 +338,11 @@ func (s SPusher) handlePushAll(w http.ResponseWriter, req *http.Request, sender 
 		name string
 		err  error
 	)
-	if name, err = s.pushAll(sender, f.Data, f.SchedAt); err != nil {
+	data, _ := json.Marshal(map[string]string{
+		"data": f.Data,
+		"tag":  f.Tag,
+	})
+	if name, err = s.pushAll(sender, string(data), f.SchedAt); err != nil {
 		log.Printf("pushAll() failed (%s)", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
