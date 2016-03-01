@@ -680,7 +680,7 @@ func (s SPusher) handleGetPushersBySender(w http.ResponseWriter, req *http.Reque
 		size = 100
 	}
 
-	total, pushers, err = s.storer.Search("Senders:"+sender, size, from)
+	total, pushers, err = s.storer.Search("senders:"+sender, from, size)
 	if err != nil {
 		log.Printf("Storer.Search() failed (%s)", err)
 	}
