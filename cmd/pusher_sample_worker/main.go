@@ -40,6 +40,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	w := worker.New(pw, "")
+	w := worker.New(pw, "", "", "")
 	w.RunSender(sampleSender{})
 }

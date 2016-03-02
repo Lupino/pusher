@@ -4,21 +4,40 @@ import (
 	"encoding/json"
 	"fmt"
 	pusherLib "github.com/Lupino/pusher"
+	"github.com/Lupino/pusher/utils"
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
+	"strings"
+	"time"
 )
 
 // API of pusher server
 type API struct {
-	host string
+	host   string
+	key    string
+	secret string
 }
 
 // GetPusher from api
 func (api API) GetPusher(pusher string) (p pusherLib.Pusher, err error) {
 	var rsp *http.Response
-	if rsp, err = http.Get("http://" + api.host + "/pusher/pushers/" + pusher + "/"); err != nil {
-		log.Printf("http.Get() failed (%s)", err)
+	var path = "/pusher/pushers/" + pusher + "/"
+	var req, _ = http.NewRequest("GET", "http://"+api.host+path, nil)
+	if len(api.key) > 0 {
+		var signParams = make(map[string]string)
+		signParams["path"] = path
+		req.Header.Add("X-App-Key", api.key)
+		signParams["app_key"] = api.key
+		var timestamp = strconv.FormatInt(time.Now().Unix(), 10)
+		req.Header.Add("X-Request-Time", timestamp)
+		signParams["timestamp"] = timestamp
+		var sign = utils.HmacMD5(api.secret, signParams)
+		req.Header.Add("X-Request-Signature", sign)
+	}
+	if rsp, err = http.DefaultClient.Do(req); err != nil {
+		log.Printf("http.DefaultClient.Do() failed (%s)", err)
 		return
 	}
 	defer rsp.Body.Close()
@@ -51,9 +70,31 @@ type searchPusherResult struct {
 // SearchPusher from api
 func (api API) SearchPusher(q string, from, size int) (total int, pushers []pusherLib.Pusher, err error) {
 	var rsp *http.Response
-	var url = fmt.Sprintf("http://%s/pusher/search/?q=%s&from=%d&size=%d", api.host, q, from, size)
-	if rsp, err = http.Get(url); err != nil {
-		log.Printf("http.Get() failed (%s)", err)
+	var path = fmt.Sprintf("/pusher/search/")
+	var query = url.Values{}
+	query.Add("q", q)
+	query.Add("from", strconv.Itoa(from))
+	query.Add("size", strconv.Itoa(size))
+
+	var url = fmt.Sprintf("http://%s%s?%s", api.host, path, query.Encode())
+
+	var req, _ = http.NewRequest("GET", url, nil)
+	if len(api.key) > 0 {
+		var signParams = make(map[string]string)
+		signParams["path"] = path
+		req.Header.Add("X-App-Key", api.key)
+		signParams["app_key"] = api.key
+		var timestamp = strconv.FormatInt(time.Now().Unix(), 10)
+		req.Header.Add("X-Request-Time", timestamp)
+		signParams["timestamp"] = timestamp
+		for key := range query {
+			signParams[key] = query.Get(key)
+		}
+		var sign = utils.HmacMD5(api.secret, signParams)
+		req.Header.Add("X-Request-Signature", sign)
+	}
+	if rsp, err = http.DefaultClient.Do(req); err != nil {
+		log.Printf("http.DefaultClient.Do() failed (%s)", err)
 		return
 	}
 	defer rsp.Body.Close()
@@ -76,8 +117,28 @@ func (api API) Push(sender, pusher, data string) (err error) {
 	var form = url.Values{}
 	form.Set("pusher", pusher)
 	form.Set("data", data)
-	if rsp, err = http.PostForm("http://"+api.host+"/pusher/"+sender+"/push", form); err != nil {
-		log.Printf("http.PostForm() failed (%s)", err)
+
+	var path = fmt.Sprintf("/pusher/%s/push", sender)
+	var url = fmt.Sprintf("http://%s%s", api.host, path)
+
+	var req, _ = http.NewRequest("POST", url, strings.NewReader(form.Encode()))
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	if len(api.key) > 0 {
+		var signParams = make(map[string]string)
+		signParams["path"] = path
+		req.Header.Add("X-App-Key", api.key)
+		signParams["app_key"] = api.key
+		var timestamp = strconv.FormatInt(time.Now().Unix(), 10)
+		req.Header.Add("X-Request-Time", timestamp)
+		signParams["timestamp"] = timestamp
+		for key := range form {
+			signParams[key] = form.Get(key)
+		}
+		var sign = utils.HmacMD5(api.secret, signParams)
+		req.Header.Add("X-Request-Signature", sign)
+	}
+	if rsp, err = http.DefaultClient.Do(req); err != nil {
+		log.Printf("http.DefaultClient.Do() failed (%s)", err)
 		return
 	}
 	defer rsp.Body.Close()

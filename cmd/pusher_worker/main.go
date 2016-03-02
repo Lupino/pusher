@@ -18,6 +18,8 @@ var (
 	dayuSecret   string
 	from         string
 	fromName     string
+	key          string
+	secret       string
 )
 
 func init() {
@@ -29,6 +31,8 @@ func init() {
 	flag.StringVar(&dayuSecret, "alidayu_secret", "", "The alidayu app secret.")
 	flag.StringVar(&from, "from", "", "The sendmail from address.")
 	flag.StringVar(&fromName, "from_name", "", "The sendmail from name.")
+	flag.StringVar(&key, "key", "", "the pusher server app key. (optional)")
+	flag.StringVar(&secret, "secret", "", "the pusher server app secret. (optional)")
 	flag.Parse()
 }
 
@@ -38,7 +42,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	w := worker.New(pw, pusherHost)
+	w := worker.New(pw, pusherHost, key, secret)
 	var sg = sendgrid.NewSendGridClient(sgUser, sgKey)
 	var mailSender = senders.NewMailSender(w, sg, from, fromName)
 	var smsSender = senders.NewSMSSender(w, dayuKey, dayuSecret)

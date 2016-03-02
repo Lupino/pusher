@@ -36,10 +36,10 @@ type Worker struct {
 }
 
 // New worker
-func New(w *periodic.Worker, host string) Worker {
+func New(w *periodic.Worker, host, key, secret string) Worker {
 	return Worker{
 		w:   w,
-		api: API{host: host},
+		api: API{host: host, key: key, secret: secret},
 	}
 }
 

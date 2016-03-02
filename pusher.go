@@ -106,11 +106,13 @@ func (pusher *Pusher) DelTag(sender string) bool {
 type SPusher struct {
 	storer Storer
 	p      *periodic.Client
+	key    string
+	secret string
 }
 
 // NewSPusher create a server pusher instance
-func NewSPusher(storer Storer, p *periodic.Client) SPusher {
-	return SPusher{storer: storer, p: p}
+func NewSPusher(storer Storer, p *periodic.Client, key, secret string) SPusher {
+	return SPusher{storer: storer, p: p, key: key, secret: secret}
 }
 
 func (s SPusher) addSender(p Pusher, senders ...string) (err error) {
