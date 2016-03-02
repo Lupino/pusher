@@ -93,7 +93,7 @@ import (
 )
 
 pw := periodic.NewWorker()
-w := worker.New(pw, periodicHost)
+w := worker.New(pw, periodicHost, key, secret)
 var mailSender = senders.NewMailSender(w, ...)
 var smsSender = senders.NewSMSSender(w, ...)
 var pushAllSender = senders.NewPushAllSender(w, ...)
@@ -134,6 +134,36 @@ type Storer interface {
 	GetAll(from, size int) (uint64, []Pusher, error)
 }
 ```
+
+Use pusher auth middleware
+--------------------------
+If you need auth the pusher api, just add `Auth` middleware to you http server,
+or pass `-key` and `-secret` on the pusher command.
+
+On client add http header:
+```
+X-App-Key: app_key
+X-Request-Time: current unix time stamp
+X-Request-Signature: signature
+```
+
+the `signature` use `hmac_md5`:
+
+* First initial `hmac_md5` use the `secret`
+* Second get sign params with request path and query or data. eg:
+```go
+var signParams = make(map[string]string)
+signParams["app_key"] = key
+signParams["path"] = "/pusher/search/"
+signParams["timestamp"] = timestamp
+signParams["q"] = q
+signParams["from"] = from
+```
+* Third sort the key with `ascii` order, join them.
+eg: `foo=1`, `bar=2`, `foo_bar=3`, `foobar=4`, sort and join them is `bar2foo1foo_bar3foobar4`
+* Fourth `hmac_md5` the join data.
+* Five `hex` them and get upper case
+* also see [HmacMD5](https://github.com/Lupino/pusher/blob/master/utils/utils.go#L35) and [worker/api.go](https://github.com/Lupino/pusher/blob/master/worker/api.go)
 
 Requirements
 ------------
