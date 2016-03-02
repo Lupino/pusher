@@ -51,7 +51,7 @@ func (s PushAllSender) Send(sender, data string) (int, error) {
 	s.pushs(sender, pushers, workdata["data"])
 	for from = size; from < total; from = from + size {
 		_, pushers, _ = api.SearchPusher(query, from, size)
-		s.pushs(sender, pushers, data)
+		s.pushs(sender, pushers, workdata["data"])
 	}
 	return 0, nil
 }
