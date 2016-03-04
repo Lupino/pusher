@@ -35,7 +35,7 @@ func init() {
 }
 
 func main() {
-	pw := periodic.NewWorker()
+	pw := periodic.NewWorker(4)
 	if err := pw.Connect(periodicPort); err != nil {
 		log.Fatal(err)
 	}
