@@ -1,13 +1,21 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"github.com/Lupino/go-periodic"
 	"github.com/Lupino/pusher/worker"
 	"github.com/Lupino/pusher/worker/senders"
 	"github.com/sendgrid/sendgrid-go"
 	"log"
+	"os"
 )
+
+type hookConfig struct {
+	Name   string `json:"name"`
+	URL    string `json:"url"`
+	Secret string `json:"secret"`
+}
 
 var (
 	periodicPort string
@@ -20,6 +28,7 @@ var (
 	fromName     string
 	key          string
 	secret       string
+	hooksFile    string
 )
 
 func init() {
@@ -33,6 +42,7 @@ func init() {
 	flag.StringVar(&fromName, "from_name", "", "The sendmail from name.")
 	flag.StringVar(&key, "key", "", "the pusher server app key. (optional)")
 	flag.StringVar(&secret, "secret", "", "the pusher server app secret. (optional)")
+	flag.StringVar(&hooksFile, "hooks", "", "the hook sender config file. (optional)")
 	flag.Parse()
 }
 
@@ -47,5 +57,24 @@ func main() {
 	var mailSender = senders.NewMailSender(w, sg, from, fromName)
 	var smsSender = senders.NewSMSSender(w, dayuKey, dayuSecret)
 	var pushAllSender = senders.NewPushAllSender(w)
-	w.RunSender(mailSender, smsSender, pushAllSender)
+
+	var hooks []worker.Sender
+	if len(hooksFile) > 0 {
+		var hooksConfig []hookConfig
+		file, err := os.Open(hooksFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		decoder := json.NewDecoder(file)
+		if err = decoder.Decode(&hooksConfig); err != nil {
+			log.Printf("json.NewDecoder().Decode() failed (%s)", err)
+			return
+		}
+		for _, config := range hooksConfig {
+			hook := senders.NewHookSender(w, config.Name, config.URL, config.Secret)
+			hooks = append(hooks, hook)
+		}
+	}
+	hooks = append(hooks, mailSender, smsSender, pushAllSender)
+	w.RunSender(hooks...)
 }
