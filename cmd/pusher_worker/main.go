@@ -9,6 +9,7 @@ import (
 	"github.com/sendgrid/sendgrid-go"
 	"log"
 	"os"
+	"runtime"
 )
 
 type hookConfig struct {
@@ -29,6 +30,7 @@ var (
 	key          string
 	secret       string
 	hooksFile    string
+	size         int
 )
 
 func init() {
@@ -43,11 +45,12 @@ func init() {
 	flag.StringVar(&key, "key", "", "the pusher server app key. (optional)")
 	flag.StringVar(&secret, "secret", "", "the pusher server app secret. (optional)")
 	flag.StringVar(&hooksFile, "hooks", "", "the hook sender config file. (optional)")
+	flag.IntVar(&size, "size", runtime.NumCPU()*2, "the size of goroutines. (optional)")
 	flag.Parse()
 }
 
 func main() {
-	pw := periodic.NewWorker()
+	pw := periodic.NewWorker(size)
 	if err := pw.Connect(periodicPort); err != nil {
 		log.Fatal(err)
 	}
