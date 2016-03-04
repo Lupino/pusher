@@ -36,7 +36,7 @@ func (s HookSender) GetName() string {
 }
 
 // Send message to pusher then return sendlater
-func (s HookSender) Send(pusher, data string) (int, error) {
+func (s HookSender) Send(pusher, data string, counter int) (int, error) {
 	var (
 		rsp        *http.Response
 		err        error
@@ -71,7 +71,7 @@ func (s HookSender) Send(pusher, data string) (int, error) {
 	defer rsp.Body.Close()
 	if int(rsp.StatusCode/100) != 2 {
 		err = fmt.Errorf("hook[%s] sender to pusher[%s] failed", s.name, pusher)
-		return 0, nil
+		return 10 * counter, nil
 	}
 	return 0, nil
 }

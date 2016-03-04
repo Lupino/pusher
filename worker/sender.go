@@ -8,5 +8,5 @@ type Sender interface {
 	// if err != nil job fail
 	// if sendlater > 0 send later
 	// if sendlater == 0 send done
-	Send(pusher, data string) (sendlater int, err error)
+	Send(pusher, data string, counter int) (sendlater int, err error)
 }

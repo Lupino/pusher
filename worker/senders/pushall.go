@@ -25,7 +25,7 @@ func (PushAllSender) GetName() string {
 }
 
 // Send message to pusher then return sendlater
-func (s PushAllSender) Send(sender, data string) (int, error) {
+func (s PushAllSender) Send(sender, data string, counter int) (int, error) {
 	var (
 		err      error
 		pushers  []pusherLib.Pusher
@@ -46,7 +46,7 @@ func (s PushAllSender) Send(sender, data string) (int, error) {
 
 	api := s.w.GetAPI()
 	if total, pushers, err = api.SearchPusher(query, from, size); err != nil {
-		return 10, nil
+		return 10 * counter, nil
 	}
 	s.pushs(sender, pushers, workdata["data"])
 	for from = size; from < total; from = from + size {

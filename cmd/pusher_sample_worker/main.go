@@ -15,7 +15,7 @@ func (p sampleSender) GetName() string {
 	return "sample_sender"
 }
 
-func (p sampleSender) Send(pusher, data string) (int, error) {
+func (p sampleSender) Send(pusher, data string, counter int) (int, error) {
 
 	// schedlater 10s
 	if data == "1" {

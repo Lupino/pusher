@@ -45,7 +45,7 @@ func (SMSSender) GetName() string {
 }
 
 // Send message to pusher then return sendlater
-func (s SMSSender) Send(pusher, data string) (int, error) {
+func (s SMSSender) Send(pusher, data string, counter int) (int, error) {
 	var (
 		sms    smsObject
 		err    error

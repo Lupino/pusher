@@ -35,7 +35,7 @@ func (MailSender) GetName() string {
 }
 
 // Send message to pusher then return sendlater
-func (s MailSender) Send(pusher, data string) (int, error) {
+func (s MailSender) Send(pusher, data string, counter int) (int, error) {
 	var (
 		m      mail
 		err    error

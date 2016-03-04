@@ -17,12 +17,12 @@ func warperSender(sender Sender) func(periodic.Job) {
 			job.Done() // ignore invalid job
 			return
 		}
-		later, err := sender.Send(pusher, job.Args)
+		later, err := sender.Send(pusher, job.Args, int(job.Raw.Counter))
 
 		if err != nil {
 			job.Fail()
 		} else if later > 0 {
-			job.SchedLater(later)
+			job.SchedLater(later, 1)
 		} else {
 			job.Done()
 		}
