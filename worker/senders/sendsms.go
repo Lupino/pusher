@@ -2,18 +2,14 @@ package senders
 
 import (
 	"bytes"
-	"crypto/hmac"
-	"crypto/md5"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	pusherLib "github.com/Lupino/pusher"
+	"github.com/Lupino/pusher/utils"
 	"github.com/Lupino/pusher/worker"
 	"log"
 	"net/http"
 	"net/url"
-	"sort"
-	"strings"
 	"text/template"
 	"time"
 )
@@ -104,7 +100,7 @@ func (s SMSSender) SendSMS(phoneNumber, smsParams, signName, template string) er
 	params["rec_num"] = phoneNumber
 	params["sms_param"] = smsParams
 	params["sms_template_code"] = template
-	params["sign"] = hmacMd5(s.appSecret, params)
+	params["sign"] = utils.HmacMD5(s.appSecret, params)
 
 	var form = url.Values{}
 	for key, value := range params {
@@ -133,20 +129,4 @@ func (s SMSSender) SendSMS(phoneNumber, smsParams, signName, template string) er
 		return fmt.Errorf("Unknow error")
 	}
 	return fmt.Errorf("%s", errRet["sub_code"])
-}
-
-func hmacMd5(slot string, params map[string]string) string {
-	mac := hmac.New(md5.New, []byte(slot))
-	var keys []string
-	for key := range params {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-	for _, key := range keys {
-		mac.Write([]byte(key))
-		mac.Write([]byte(params[key]))
-	}
-	sum := mac.Sum(nil)
-
-	return strings.ToUpper(hex.EncodeToString(sum))
 }
