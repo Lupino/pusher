@@ -33,10 +33,11 @@ func NewSMSSender(w worker.Worker, key, secret string) SMSSender {
 }
 
 type smsObject struct {
-	Params    string `json:"params"`
-	SignName  string `json:"signName"`
-	Template  string `json:"template"`
-	CreatedAt int64  `json:"createdAt"`
+	PhoneNumber string `json:"phoneNumber"`
+	Params      string `json:"params"`
+	SignName    string `json:"signName"`
+	Template    string `json:"template"`
+	CreatedAt   int64  `json:"createdAt"`
 }
 
 // GetName for the periodic funcName
@@ -64,7 +65,11 @@ func (s SMSSender) Send(pusher, data string, counter int) (int, error) {
 		return 0, nil
 	}
 
-	if p.PhoneNumber == "" {
+	if sms.PhoneNumber == "" {
+		sms.PhoneNumber = p.PhoneNumber
+	}
+
+	if sms.PhoneNumber == "" {
 		return 0, nil
 	}
 
@@ -79,7 +84,7 @@ func (s SMSSender) Send(pusher, data string, counter int) (int, error) {
 		}
 	}
 
-	if err = s.SendSMS(p.PhoneNumber, params, sms.SignName, sms.Template); err != nil {
+	if err = s.SendSMS(sms.PhoneNumber, params, sms.SignName, sms.Template); err != nil {
 		log.Printf("senders.SMSSender.SendSMS() failed (%s)", err)
 		return 0, nil
 	}
