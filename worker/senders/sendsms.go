@@ -129,9 +129,9 @@ func (s SMSSender) SendSMS(phoneNumber, smsParams, signName, template string) er
 	if !ok {
 		return nil
 	}
-	errRet, ok := errRsp.(map[string]string)
+	errRet, ok := errRsp.(map[string]interface{})
 	if !ok {
-		return fmt.Errorf("Unknow error")
+		return fmt.Errorf("Unknow error (%s)", errRsp)
 	}
 	return fmt.Errorf("%s", errRet["sub_code"])
 }
