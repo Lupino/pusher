@@ -7,6 +7,7 @@ import (
 	"github.com/Lupino/pusher/store/boltdb"
 	"github.com/codegangsta/negroni"
 	"log"
+	"os"
 )
 
 var (
@@ -35,14 +36,22 @@ func main() {
 		log.Fatal(err)
 	}
 
+	var path = root + "/pusher.db"
+	if err = os.MkdirAll(path, 0755); err != nil {
+		log.Fatal(err)
+	}
+
 	storer, err = boltdb.New(map[string]interface{}{
-		"path": root + "/pusher.db",
+		"path": path,
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	sp := pusher.NewSPusher(storer, pc, key, secret)
+	sp, err := pusher.NewSPusher(storer, pc, path, key, secret)
+	if err != nil {
+		log.Fatal(err)
+	}
 	n := negroni.New(negroni.NewRecovery(), negroni.NewLogger())
 	if len(key) > 0 {
 		n.Use(negroni.HandlerFunc(sp.Auth))

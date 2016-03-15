@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"github.com/Lupino/go-periodic"
 	"github.com/Lupino/pusher/utils"
+	"github.com/blevesearch/bleve"
+	"log"
 )
 
 // PREFIX the perfix key of pusher.
@@ -108,11 +110,18 @@ type SPusher struct {
 	p      *periodic.Client
 	key    string
 	secret string
+	path   string
+	index  bleve.Index
 }
 
 // NewSPusher create a server pusher instance
-func NewSPusher(storer Storer, p *periodic.Client, key, secret string) SPusher {
-	return SPusher{storer: storer, p: p, key: key, secret: secret}
+func NewSPusher(storer Storer, p *periodic.Client, path, key, secret string) (sp SPusher, err error) {
+	var index bleve.Index
+	if index, err = openIndex(path); err != nil {
+		return
+	}
+	sp = SPusher{storer: storer, p: p, key: key, secret: secret, path: path, index: index}
+	return
 }
 
 func (s SPusher) addSender(p Pusher, senders ...string) (err error) {
@@ -124,7 +133,7 @@ func (s SPusher) addSender(p Pusher, senders ...string) (err error) {
 	}
 
 	if changed {
-		if err = s.storer.Set(p); err != nil {
+		if err = s.savePusher(p); err != nil {
 			return
 		}
 	}
@@ -140,7 +149,7 @@ func (s SPusher) removeSender(p Pusher, senders ...string) (err error) {
 	}
 
 	if changed {
-		if err = s.storer.Set(p); err != nil {
+		if err = s.savePusher(p); err != nil {
 			return
 		}
 	}
@@ -156,7 +165,7 @@ func (s SPusher) addTag(p Pusher, tags ...string) (err error) {
 	}
 
 	if changed {
-		if err = s.storer.Set(p); err != nil {
+		if err = s.savePusher(p); err != nil {
 			return
 		}
 	}
@@ -172,7 +181,7 @@ func (s SPusher) removeTag(p Pusher, tags ...string) (err error) {
 	}
 
 	if changed {
-		if err = s.storer.Set(p); err != nil {
+		if err = s.savePusher(p); err != nil {
 			return
 		}
 	}
@@ -201,4 +210,24 @@ func (s SPusher) pushAll(sender, data, schedat string) (string, error) {
 		return "", err
 	}
 	return name, nil
+}
+
+func (s SPusher) savePusher(p Pusher) (err error) {
+	if err = s.storer.Set(p); err != nil {
+		return
+	}
+	if err = s.index.Index(p.ID, p); err != nil {
+		log.Printf("bleve.Index.Index() failed(%s)", err)
+	}
+	return nil
+}
+
+func (s SPusher) removePusher(p string) (err error) {
+	if err = s.storer.Del(p); err != nil {
+		return
+	}
+	if err = s.index.Delete(p); err != nil {
+		log.Printf("bleve.Index.Delete() failed(%s)", err)
+	}
+	return nil
 }

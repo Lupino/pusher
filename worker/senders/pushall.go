@@ -32,7 +32,7 @@ func (s PushAllSender) Send(sender, data string, counter int) (int, error) {
 		total    int
 		from     = 0
 		size     = 10
-		query    = "senders:" + sender
+		query    map[string]interface{}
 		workdata map[string]string
 	)
 	if err = json.Unmarshal([]byte(data), &workdata); err != nil {
@@ -41,16 +41,23 @@ func (s PushAllSender) Send(sender, data string, counter int) (int, error) {
 	}
 
 	if tag, ok := workdata["tag"]; ok && len(tag) > 0 {
-		query = query + " tags:" + tag
+		query["conjuncts"] = []interface{}{
+			map[string]string{"query": "tags:" + tag},
+			map[string]string{"query": "senders:" + sender},
+		}
+	} else {
+		query["query"] = "senders:" + sender
 	}
 
+	q, _ := json.Marshal(query)
+
 	api := s.w.GetAPI()
-	if total, pushers, err = api.SearchPusher(query, from, size); err != nil {
+	if total, pushers, err = api.SearchPusher(string(q), from, size); err != nil {
 		return 10 * counter, nil
 	}
 	s.pushs(sender, pushers, workdata["data"])
 	for from = size; from < total; from = from + size {
-		_, pushers, _ = api.SearchPusher(query, from, size)
+		_, pushers, _ = api.SearchPusher(string(q), from, size)
 		s.pushs(sender, pushers, workdata["data"])
 	}
 	return 0, nil

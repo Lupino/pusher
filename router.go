@@ -2,6 +2,7 @@ package pusher
 
 import (
 	"encoding/json"
+	"github.com/blevesearch/bleve"
 	"github.com/gorilla/mux"
 	"github.com/mholt/binding"
 	"github.com/unrolled/render"
@@ -560,14 +561,32 @@ func (s SPusher) handleSearchPusher(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if q == "" {
-		sendJSONResponse(w, http.StatusNotAcceptable, "err", "q is required.")
+		sendJSONResponse(w, http.StatusBadRequest, "err", "q is required.")
 		return
 	}
 
-	total, pushers, err = s.storer.Search(q, from, size)
+	query, err := bleve.ParseQuery([]byte(q))
 	if err != nil {
-		log.Printf("Storer.Search() failed (%s)", err)
+		log.Printf("bleve.ParseQuery() failed(%s)", err)
+		sendJSONResponse(w, http.StatusBadRequest, "err", err)
+		return
 	}
+	searchRequest := bleve.NewSearchRequestOptions(query, size, from, false)
+	searchResult, err := s.index.Search(searchRequest)
+	if err != nil {
+		log.Printf("bleve.Index.Search() failed(%s)", err)
+		sendJSONResponse(w, http.StatusBadRequest, "err", err)
+		return
+	}
+
+	for _, hit := range searchResult.Hits {
+		p, _ := s.storer.Get(hit.ID)
+		if p.ID == hit.ID {
+			pushers = append(pushers, p)
+		}
+	}
+
+	total = searchResult.Total
 
 	sendJSONResponse(w, http.StatusOK, "", map[string]interface{}{
 		"pushers": pushers,
@@ -638,8 +657,7 @@ func (s SPusher) handleAddPusher(w http.ResponseWriter, req *http.Request) {
  *
  */
 func (s SPusher) handleRemovePusher(w http.ResponseWriter, req *http.Request, pusher string) {
-	if err := s.storer.Del(pusher); err != nil {
-		log.Printf("Storer.Del() failed(%s)", err)
+	if err := s.removePusher(pusher); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
