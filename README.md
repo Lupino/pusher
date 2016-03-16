@@ -16,6 +16,7 @@ Install
 -------
 
     go get -v github.com/Lupino/pusher
+    cd $GOPATH/src/github.com/Lupino/pusher
     go install ./...
 
 Getting start with pusher command
@@ -23,7 +24,6 @@ Getting start with pusher command
 
 ### First start the needed server
 * Start [Periodic task system](https://github.com/Lupino/periodic) with a sample command `periodic -d`
-* Start [Redis](http://redis.io) with the command `redis-server`
 
 ### Second start pusher api server
 * Start pusher api server with the command `pusher`
@@ -130,7 +130,6 @@ type Storer interface {
 	Set(Pusher) error
 	Get(string) (Pusher, error)
 	Del(string) error
-	Search(string, int, int) (uint64, []Pusher, error)
 	GetAll(from, size int) (uint64, []Pusher, error)
 }
 ```
