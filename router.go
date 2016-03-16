@@ -568,7 +568,7 @@ func (s SPusher) handleSearchPusher(w http.ResponseWriter, req *http.Request) {
 
 	query, err := bleve.ParseQuery([]byte(q))
 	if err != nil {
-		query = NewQueryStringQuery(q)
+		query = bleve.NewQueryStringQuery(q)
 	}
 	searchRequest := bleve.NewSearchRequestOptions(query, size, from, false)
 	searchResult, err := s.index.Search(searchRequest)
