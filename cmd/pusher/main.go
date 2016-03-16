@@ -48,10 +48,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	sp, err := pusher.NewSPusher(storer, pc, path, key, secret)
+	sp, err := pusher.NewSPusher(storer, pc, path)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	sp.SetKey(key)
+	sp.SetSecret(secret)
+
 	n := negroni.New(negroni.NewRecovery(), negroni.NewLogger())
 	if len(key) > 0 {
 		n.Use(negroni.HandlerFunc(sp.Auth))

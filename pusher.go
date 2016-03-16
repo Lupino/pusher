@@ -115,13 +115,23 @@ type SPusher struct {
 }
 
 // NewSPusher create a server pusher instance
-func NewSPusher(storer Storer, p *periodic.Client, path, key, secret string) (sp SPusher, err error) {
+func NewSPusher(storer Storer, p *periodic.Client, path string) (sp SPusher, err error) {
 	var index bleve.Index
 	if index, err = openIndex(path); err != nil {
 		return
 	}
-	sp = SPusher{storer: storer, p: p, key: key, secret: secret, path: path, index: index}
+	sp = SPusher{storer: storer, p: p, path: path, index: index}
 	return
+}
+
+// SetKey server pusher app key
+func (s *SPusher) SetKey(key string) {
+	s.key = key
+}
+
+// SetSecret server pusher app secret
+func (s *SPusher) SetSecret(secret string) {
+	s.secret = secret
 }
 
 func (s SPusher) addSender(p Pusher, senders ...string) (err error) {
