@@ -499,7 +499,8 @@ func (s SPusher) handleGetAllPusher(w http.ResponseWriter, req *http.Request) {
  * @apiName SearchPusher
  * @apiGroup Pusher
  *
- * @apiParam {String} q search keyword.
+ * @apiParam {String} q query string or query json object.
+ * Reference: [Query String Query](http://www.blevesearch.com/docs/Query-String-Query/) and [query_test.go](https://github.com/blevesearch/bleve/blob/master/query_test.go)
  * @apiParam {Number} [from=0] describe how much and which part of the return pusher list
  * @apiParam {Number} [size=10] describe how much and which part of the return pusher list
  * @apiExample Example usage:
