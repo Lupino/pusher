@@ -32,7 +32,7 @@ func (s PushAllSender) Send(sender, data string, counter int) (int, error) {
 		total    int
 		from     = 0
 		size     = 10
-		query    map[string]interface{}
+		query    = make(map[string]interface{})
 		workdata map[string]string
 	)
 	if err = json.Unmarshal([]byte(data), &workdata); err != nil {
