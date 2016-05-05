@@ -75,7 +75,7 @@ func (s MailSender) Send(pusher, data string, counter int) (int, error) {
 	message.AddTo(p.Email)
 	message.AddToName(name)
 	message.SetSubject(m.Subject)
-	message.SetText(text)
+	message.SetHTML(text)
 	message.SetFrom(s.from)
 	message.SetFromName(s.fromName)
 	err = s.sg.Send(message)
