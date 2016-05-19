@@ -1,4 +1,4 @@
-package worker
+package client
 
 import (
 	"encoding/json"
@@ -13,27 +13,32 @@ import (
 	"time"
 )
 
-// API of pusher server
-type API struct {
+// PusherClient for pusher server
+type PusherClient struct {
 	host   string
 	key    string
 	secret string
 }
 
-// GetPusher from api
-func (api API) GetPusher(pusher string) (p pusherLib.Pusher, err error) {
+// New create new pusher client
+func New(host, key, secret string) PusherClient {
+	return PusherClient{host: host, key: key, secret: secret}
+}
+
+// GetPusher from client
+func (client PusherClient) GetPusher(pusher string) (p pusherLib.Pusher, err error) {
 	var rsp *http.Response
 	var path = "/pusher/pushers/" + pusher + "/"
-	var req, _ = http.NewRequest("GET", "http://"+api.host+path, nil)
-	if len(api.key) > 0 {
+	var req, _ = http.NewRequest("GET", "http://"+client.host+path, nil)
+	if len(client.key) > 0 {
 		var signParams = make(map[string]string)
 		signParams["path"] = path
-		req.Header.Add("X-App-Key", api.key)
-		signParams["app_key"] = api.key
+		req.Header.Add("X-App-Key", client.key)
+		signParams["app_key"] = client.key
 		var timestamp = strconv.FormatInt(time.Now().Unix(), 10)
 		req.Header.Add("X-Request-Time", timestamp)
 		signParams["timestamp"] = timestamp
-		var sign = utils.HmacMD5(api.secret, signParams)
+		var sign = utils.HmacMD5(client.secret, signParams)
 		req.Header.Add("X-Request-Signature", sign)
 	}
 	if rsp, err = http.DefaultClient.Do(req); err != nil {
@@ -67,8 +72,8 @@ type searchPusherResult struct {
 	Q       string             `json:"q"`
 }
 
-// SearchPusher from api
-func (api API) SearchPusher(q string, from, size int) (total int, pushers []pusherLib.Pusher, err error) {
+// SearchPusher from client
+func (client PusherClient) SearchPusher(q string, from, size int) (total int, pushers []pusherLib.Pusher, err error) {
 	var rsp *http.Response
 	var path = fmt.Sprintf("/pusher/search/")
 	var query = url.Values{}
@@ -76,21 +81,21 @@ func (api API) SearchPusher(q string, from, size int) (total int, pushers []push
 	query.Add("from", strconv.Itoa(from))
 	query.Add("size", strconv.Itoa(size))
 
-	var url = fmt.Sprintf("http://%s%s?%s", api.host, path, query.Encode())
+	var url = fmt.Sprintf("http://%s%s?%s", client.host, path, query.Encode())
 
 	var req, _ = http.NewRequest("GET", url, nil)
-	if len(api.key) > 0 {
+	if len(client.key) > 0 {
 		var signParams = make(map[string]string)
 		signParams["path"] = path
-		req.Header.Add("X-App-Key", api.key)
-		signParams["app_key"] = api.key
+		req.Header.Add("X-App-Key", client.key)
+		signParams["app_key"] = client.key
 		var timestamp = strconv.FormatInt(time.Now().Unix(), 10)
 		req.Header.Add("X-Request-Time", timestamp)
 		signParams["timestamp"] = timestamp
 		for key := range query {
 			signParams[key] = query.Get(key)
 		}
-		var sign = utils.HmacMD5(api.secret, signParams)
+		var sign = utils.HmacMD5(client.secret, signParams)
 		req.Header.Add("X-Request-Signature", sign)
 	}
 	if rsp, err = http.DefaultClient.Do(req); err != nil {
@@ -111,30 +116,30 @@ func (api API) SearchPusher(q string, from, size int) (total int, pushers []push
 	return ret.Total, ret.Pushers, nil
 }
 
-// Push message to pusher server by api
-func (api API) Push(sender, pusher, data string) (err error) {
+// Push message to pusher server by client
+func (client PusherClient) Push(sender, pusher, data string) (err error) {
 	var rsp *http.Response
 	var form = url.Values{}
 	form.Set("pusher", pusher)
 	form.Set("data", data)
 
 	var path = fmt.Sprintf("/pusher/%s/push", sender)
-	var url = fmt.Sprintf("http://%s%s", api.host, path)
+	var url = fmt.Sprintf("http://%s%s", client.host, path)
 
 	var req, _ = http.NewRequest("POST", url, strings.NewReader(form.Encode()))
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	if len(api.key) > 0 {
+	if len(client.key) > 0 {
 		var signParams = make(map[string]string)
 		signParams["path"] = path
-		req.Header.Add("X-App-Key", api.key)
-		signParams["app_key"] = api.key
+		req.Header.Add("X-App-Key", client.key)
+		signParams["app_key"] = client.key
 		var timestamp = strconv.FormatInt(time.Now().Unix(), 10)
 		req.Header.Add("X-Request-Time", timestamp)
 		signParams["timestamp"] = timestamp
 		for key := range form {
 			signParams[key] = form.Get(key)
 		}
-		var sign = utils.HmacMD5(api.secret, signParams)
+		var sign = utils.HmacMD5(client.secret, signParams)
 		req.Header.Add("X-Request-Signature", sign)
 	}
 	if rsp, err = http.DefaultClient.Do(req); err != nil {

@@ -2,6 +2,7 @@ package worker
 
 import (
 	"github.com/Lupino/go-periodic"
+	"github.com/Lupino/pusher/client"
 	"github.com/Lupino/pusher/utils"
 	"log"
 )
@@ -32,14 +33,14 @@ func warperSender(sender Sender) func(periodic.Job) {
 // Worker for pusher
 type Worker struct {
 	w   *periodic.Worker
-	api API
+	api client.PusherClient
 }
 
 // New worker
 func New(w *periodic.Worker, host, key, secret string) Worker {
 	return Worker{
 		w:   w,
-		api: API{host: host, key: key, secret: secret},
+		api: client.New(host, key, secret),
 	}
 }
 
@@ -53,6 +54,6 @@ func (w Worker) RunSender(senders ...Sender) {
 }
 
 // GetAPI return some implement pusher client api
-func (w Worker) GetAPI() API {
+func (w Worker) GetAPI() client.PusherClient {
 	return w.api
 }
