@@ -66,6 +66,6 @@ func (s PushAllSender) Send(sender, data string, counter int) (int, error) {
 func (s PushAllSender) pushs(sender string, pushers []pusherLib.Pusher, data string) {
 	api := s.w.GetAPI()
 	for _, pusher := range pushers {
-		api.Push(sender, pusher.ID, data)
+		api.Push(sender, pusher.ID, data, "0")
 	}
 }
