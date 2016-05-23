@@ -29,6 +29,7 @@ var (
 	fromName     string
 	key          string
 	secret       string
+	retryTimes   int
 	hooksFile    string
 	size         int
 )
@@ -46,6 +47,7 @@ func init() {
 	flag.StringVar(&secret, "secret", "", "the pusher server app secret. (optional)")
 	flag.StringVar(&hooksFile, "hooks", "", "the hook sender config file. (optional)")
 	flag.IntVar(&size, "size", runtime.NumCPU()*2, "the size of goroutines. (optional)")
+	flag.IntVar(&retryTimes, "retry_times", 10, "the size of goroutines. (optional)")
 	flag.Parse()
 }
 
@@ -55,7 +57,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	w := worker.New(pw, pusherHost, key, secret)
+	w := worker.New(pw, pusherHost, key, secret, uint(retryTimes))
 	var sg = sendgrid.NewSendGridClient(sgUser, sgKey)
 	var mailSender = senders.NewMailSender(w, sg, from, fromName)
 	var smsSender = senders.NewSMSSender(w, dayuKey, dayuSecret)

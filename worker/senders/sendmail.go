@@ -81,6 +81,8 @@ func (s MailSender) Send(pusher, data string, counter int) (int, error) {
 	err = s.sg.Send(message)
 	if err != nil {
 		log.Printf("sendgrid.SGClient.Send() failed (%s)", err)
+		log.Printf("senders.MailSender.Send() retry send later (%ss)", 10*counter)
+		return 10 * counter, nil
 	}
 	return 0, nil
 }

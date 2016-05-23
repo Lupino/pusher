@@ -1,7 +1,6 @@
 package senders
 
 import (
-	"fmt"
 	"github.com/Lupino/pusher/utils"
 	"github.com/Lupino/pusher/worker"
 	"log"
@@ -70,7 +69,8 @@ func (s HookSender) Send(pusher, data string, counter int) (int, error) {
 	}
 	defer rsp.Body.Close()
 	if int(rsp.StatusCode/100) != 2 {
-		err = fmt.Errorf("hook[%s] sender to pusher[%s] failed", s.name, pusher)
+		log.Printf("senders.HookSender(%s).Send() failed (%d)", s.name, rsp.StatusCode)
+		log.Printf("senders.HookSender(%s).Send() retry send later (%ss)", s.name, 10*counter)
 		return 10 * counter, nil
 	}
 	return 0, nil

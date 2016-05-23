@@ -86,7 +86,8 @@ func (s SMSSender) Send(pusher, data string, counter int) (int, error) {
 
 	if err = s.SendSMS(sms.PhoneNumber, params, sms.SignName, sms.Template); err != nil {
 		log.Printf("senders.SMSSender.SendSMS() failed (%s)", err)
-		return 0, nil
+		log.Printf("senders.SMSSender.Send() retry send later (%ss)", 10*counter)
+		return 10 * counter, nil
 	}
 	return 0, nil
 }
