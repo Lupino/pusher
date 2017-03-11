@@ -15,11 +15,13 @@ var (
 	root         string
 	host         string
 	key          string
+	prefix       string
 	secret       string
 )
 
 func init() {
 	flag.StringVar(&periodicPort, "periodic_port", "unix:///tmp/periodic.sock", "the periodic server port.")
+	flag.StringVar(&prefix, "prefix", "pusher:", "the periodic func prefix.")
 	flag.StringVar(&host, "host", "localhost:6000", "the pusher server host.")
 	flag.StringVar(&key, "key", "", "the pusher server app key. (optional)")
 	flag.StringVar(&secret, "secret", "", "the pusher server app secret. (optional)")
@@ -55,6 +57,7 @@ func main() {
 
 	sp.SetKey(key)
 	sp.SetSecret(secret)
+	sp.SetPrefix(prefix)
 
 	n := negroni.New(negroni.NewRecovery(), negroni.NewLogger())
 	if len(key) > 0 {
