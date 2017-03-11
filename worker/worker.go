@@ -43,11 +43,11 @@ type Worker struct {
 }
 
 // New worker
-func New(w *periodic.Worker, host, key, secret string, tryTimes uint) Worker {
+func New(w *periodic.Worker, host, key, secret string) Worker {
 	return Worker{
 		w:        w,
 		api:      client.New(host, key, secret),
-		tryTimes: tryTimes,
+		tryTimes: 5,
 		prefix:   PREFIX,
 	}
 }
@@ -55,6 +55,11 @@ func New(w *periodic.Worker, host, key, secret string, tryTimes uint) Worker {
 // SetPrefix set prefix for pusher
 func (w *Worker) SetPrefix(prefix string) {
 	w.prefix = prefix
+}
+
+// SetMaxTryTimes set max try time for send failed
+func (w *Worker) SetMaxTryTimes(tryTimes uint) {
+	w.tryTimes = tryTimes
 }
 
 // RunSender by periodic worker
