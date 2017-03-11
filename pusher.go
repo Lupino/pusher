@@ -8,7 +8,7 @@ import (
 	"log"
 )
 
-// PREFIX the perfix key of pusher.
+// PREFIX the default perfix key of pusher.
 const PREFIX = "pusher:"
 
 // Pusher of pusher
@@ -111,6 +111,7 @@ type SPusher struct {
 	key    string
 	secret string
 	path   string
+	prefix string
 	index  bleve.Index
 }
 
@@ -120,7 +121,7 @@ func NewSPusher(storer Storer, p *periodic.Client, path string) (sp SPusher, err
 	if index, err = openIndex(path); err != nil {
 		return
 	}
-	sp = SPusher{storer: storer, p: p, path: path, index: index}
+	sp = SPusher{storer: storer, p: p, path: path, index: index, prefix: PREFIX}
 	return
 }
 
@@ -132,6 +133,11 @@ func (s *SPusher) SetKey(key string) {
 // SetSecret server pusher app secret
 func (s *SPusher) SetSecret(secret string) {
 	s.secret = secret
+}
+
+// SetPrefix set prefix key for periodic
+func (s *SPusher) SetPrefix(prefix string) {
+	s.prefix = prefix
 }
 
 func (s SPusher) addSender(p Pusher, senders ...string) (err error) {
@@ -204,7 +210,7 @@ func (s SPusher) push(sender, pusher, data, schedat string) (string, error) {
 		"schedat": schedat,
 	}
 	var name = utils.GenerateName(pusher, data)
-	if err := s.p.SubmitJob(PREFIX+sender, name, opts); err != nil {
+	if err := s.p.SubmitJob(s.prefix+sender, name, opts); err != nil {
 		return "", err
 	}
 	return name, nil
@@ -216,7 +222,7 @@ func (s SPusher) pushAll(sender, data, schedat string) (string, error) {
 		"schedat": schedat,
 	}
 	var name = utils.GenerateName(sender, data)
-	if err := s.p.SubmitJob(PREFIX+"pushall", name, opts); err != nil {
+	if err := s.p.SubmitJob(s.prefix+"pushall", name, opts); err != nil {
 		return "", err
 	}
 	return name, nil

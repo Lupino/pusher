@@ -7,7 +7,7 @@ import (
 	"log"
 )
 
-// PREFIX the perfix key of pusher.
+// PREFIX the default perfix key of pusher.
 const PREFIX = "pusher:"
 
 func warperSender(w Worker, sender Sender) func(periodic.Job) {
@@ -38,6 +38,7 @@ func warperSender(w Worker, sender Sender) func(periodic.Job) {
 type Worker struct {
 	w        *periodic.Worker
 	api      client.PusherClient
+	prefix   string
 	tryTimes uint
 }
 
@@ -47,13 +48,19 @@ func New(w *periodic.Worker, host, key, secret string, tryTimes uint) Worker {
 		w:        w,
 		api:      client.New(host, key, secret),
 		tryTimes: tryTimes,
+		prefix:   PREFIX,
 	}
+}
+
+// SetPrefix set prefix for pusher
+func (w *Worker) SetPrefix(prefix string) {
+	w.prefix = prefix
 }
 
 // RunSender by periodic worker
 func (w Worker) RunSender(senders ...Sender) {
 	for _, sender := range senders {
-		w.w.AddFunc(PREFIX+sender.GetName(), warperSender(w, sender))
+		w.w.AddFunc(w.prefix+sender.GetName(), warperSender(w, sender))
 		log.Printf("Loaded sender (%s)", sender.GetName())
 	}
 	w.w.Work()
