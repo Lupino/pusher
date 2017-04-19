@@ -3,6 +3,7 @@ package pusher
 import (
 	"encoding/json"
 	"github.com/blevesearch/bleve"
+	"github.com/blevesearch/bleve/search/query"
 	"github.com/gorilla/mux"
 	"github.com/mholt/binding"
 	"github.com/unrolled/render"
@@ -566,7 +567,7 @@ func (s SPusher) handleSearchPusher(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	query, err := bleve.ParseQuery([]byte(q))
+	query, err := query.ParseQuery([]byte(q))
 	if err != nil {
 		query = bleve.NewQueryStringQuery(q)
 	}

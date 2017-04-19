@@ -2,9 +2,10 @@ package pusher
 
 import (
 	"github.com/blevesearch/bleve"
+	"github.com/blevesearch/bleve/mapping"
 )
 
-func createMapping() *bleve.IndexMapping {
+func createMapping() mapping.IndexMapping {
 	mapping := bleve.NewIndexMapping()
 	return mapping
 }
